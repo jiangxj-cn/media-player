@@ -1,0 +1,5 @@
+fastapi>=0.80.0
+uvicorn[standard]>=0.20.0
+yt-dlp>=2023.0.0
+python-multipart
+aiohttp
