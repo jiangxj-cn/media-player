@@ -9,9 +9,10 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from pathlib import Path
+import os
 
 from .database import engine, Base
-from .routers import search, media, auth, playlist
+from .routers import search, media, auth, playlist, favorites, history, lyric, download
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
@@ -27,23 +28,39 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 挂载前端静态文件
-FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-if FRONTEND_DIR.exists():
-    app.mount("/static", StaticFiles(directory=FRONTEND_DIR), name="static")
+# 挂载静态文件（生产环境）
+# 优先使用构建后的 static 目录（Docker 部署），否则使用 frontend 目录（开发环境）
+STATIC_DIR = Path(__file__).parent.parent / "static"
+if STATIC_DIR.exists():
+    # 生产环境：服务构建后的前端文件
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
+else:
+    # 开发环境：服务前端源码
+    FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
+    if FRONTEND_DIR.exists():
+        app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
 
 # 注册路由
 app.include_router(search.router)
 app.include_router(media.router)
 app.include_router(auth.router)
 app.include_router(playlist.router)
+app.include_router(favorites.router)
+app.include_router(history.router)
+app.include_router(lyric.router)
+app.include_router(download.router)
 
 @app.get("/")
 async def root():
     """返回前端页面"""
-    index_file = FRONTEND_DIR / "index.html"
-    if index_file.exists():
-        return FileResponse(index_file)
+    # 生产环境：从 static 目录服务
+    static_index = Path(__file__).parent.parent / "static" / "index.html"
+    if static_index.exists():
+        return FileResponse(static_index)
+    # 开发环境：从 frontend 目录服务
+    frontend_index = Path(__file__).parent.parent / "frontend" / "index.html"
+    if frontend_index.exists():
+        return FileResponse(frontend_index)
     return {"message": "Media Player API v2.0", "docs": "/docs"}
 
 @app.get("/api")

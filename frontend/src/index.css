@@ -5,9 +5,56 @@
   --color-bg-primary: #0f0f0f;
   --color-bg-secondary: #1a1a1a;
   --color-bg-card: #1f1f1f;
+  
+  /* Light theme colors */
+  --color-bg-primary-light: #ffffff;
+  --color-bg-secondary-light: #f3f4f6;
+  --color-bg-card-light: #ffffff;
+  --color-text-primary-light: #111827;
+  --color-text-secondary-light: #6b7280;
+}
+
+/* Dark theme (default) */
+:root {
+  --bg-primary: #0f0f0f;
+  --bg-secondary: #1a1a1a;
+  --bg-card: #1f1f1f;
+  --text-primary: #ffffff;
+  --text-secondary: #9ca3af;
+  --border-color: #374151;
+}
+
+/* Light theme */
+:root.light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f3f4f6;
+  --bg-card: #ffffff;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
 }
 
 body {
-  background-color: var(--color-bg-primary);
-  color: white;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s, color 0.3s;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--border-color);
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #4b5563;
 }
