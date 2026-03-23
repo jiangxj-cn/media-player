@@ -4,7 +4,7 @@ export interface MediaItem {
   title: string
   thumbnail?: string
   duration?: number
-  source: 'youtube' | 'bilibili' | 'netease' | 'other'
+  source: 'youtube' | 'bilibili' | 'netease' | 'custom' | 'other'
 }
 
 export interface Playlist {
@@ -20,7 +20,7 @@ export interface HistoryItem {
   title: string
   thumbnail?: string
   duration?: number
-  source: 'youtube' | 'bilibili' | 'netease' | 'other'
+  source: 'youtube' | 'bilibili' | 'netease' | 'custom' | 'other'
   position: number
   playedAt: Date
 }

@@ -43,10 +43,8 @@ function App() {
   // Listen for logout events
   useEffect(() => {
     const handleLogout = () => {
-      // Clear local state on logout
       setCurrentMedia(null)
     }
-    
     window.addEventListener('auth:logout', handleLogout)
     return () => window.removeEventListener('auth:logout', handleLogout)
   }, [setCurrentMedia])
@@ -54,13 +52,8 @@ function App() {
   // 响应式侧边栏控制
   useEffect(() => {
     const handleResize = () => {
-      if (window.innerWidth < 768) {
-        setShowSidebar(false)
-      } else {
-        setShowSidebar(true)
-      }
+      setShowSidebar(window.innerWidth >= 768)
     }
-    
     handleResize()
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
@@ -73,11 +66,9 @@ function App() {
     }
     
     try {
-      // 调用后端搜索 API
       const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&source=all&max_results=10`)
       const data = await response.json()
       
-      // 转换搜索结果格式
       const results: MediaItem[] = (data.results || []).map((item: any, index: number) => ({
         id: item.id || `${item.source}-${index}`,
         url: item.url,
@@ -90,32 +81,25 @@ function App() {
       setSearchResults(results)
     } catch (error) {
       console.error('Search failed:', error)
-      // 显示错误提示
       setSearchResults([])
     }
   }
   
-  // 解析时长字符串 (如 "3:45" -> 225 秒)
   const parseDuration = (duration: string): number => {
     if (!duration) return 0
     const parts = duration.split(':').map(Number)
-    if (parts.length === 2) {
-      return parts[0] * 60 + parts[1]
-    } else if (parts.length === 3) {
-      return parts[0] * 3600 + parts[1] * 60 + parts[2]
-    }
+    if (parts.length === 2) return parts[0] * 60 + parts[1]
+    if (parts.length === 3) return parts[0] * 3600 + parts[1] * 60 + parts[2]
     return parseInt(duration) || 0
   }
 
   const handlePlay = async (item: MediaItem) => {
-    // YouTube/B站视频需要先提取流 URL
     if (item.source === 'youtube' || item.source === 'bilibili') {
       try {
         const response = await fetch(`/api/extract?url=${encodeURIComponent(item.url)}&format=best`)
         const data = await response.json()
         
         if (data.direct_url) {
-          // 使用后端代理播放（避免 403）
           const proxyUrl = `/api/proxy?url=${encodeURIComponent(data.direct_url)}`
           const playItem = {
             ...item,
@@ -126,7 +110,6 @@ function App() {
           }
           setCurrentMedia(playItem)
           
-          // 记录到历史
           fetch('/api/history', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -138,25 +121,18 @@ function App() {
               duration: playItem.duration
             })
           }).catch(e => console.error('History error:', e))
-        } else {
-          console.error('No direct URL found')
         }
       } catch (e) {
         console.error('Failed to extract media:', e)
       }
     } else {
-      // 其他来源直接播放
       setCurrentMedia(item)
     }
   }
 
-  const [customUrl, setCustomUrl] = useState('')
-  const [showUrlInput, setShowUrlInput] = useState(false)
-
   const handleCustomUrlPlay = () => {
     if (!customUrl.trim()) return
     
-    // 创建自定义媒体项
     const customMedia: MediaItem = {
       id: `custom-${Date.now()}`,
       url: customUrl.trim(),
@@ -166,12 +142,10 @@ function App() {
       source: 'custom'
     }
     
-    // 直接播放（m3u8 或 mp4）
     setCurrentMedia(customMedia)
     setCustomUrl('')
     setShowUrlInput(false)
     
-    // 记录历史
     fetch('/api/history', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -184,6 +158,8 @@ function App() {
       })
     }).catch(e => console.error('History error:', e))
   }
+
+  const handleLoginClick = () => {
     setAuthModalView('login')
     setShowAuthModal(true)
   }
@@ -216,14 +192,9 @@ function App() {
         </svg>
       </button>
 
-      {/* Sidebar - 响应式布局 */}
+      {/* Sidebar */}
       <aside className={`
-        fixed md:relative
-        z-40
-        w-80 md:w-80
-        h-full
-        bg-gray-900 md:bg-gray-900
-        border-r border-gray-800
+        fixed md:relative z-40 w-80 h-full bg-gray-900 border-r border-gray-800
         transform transition-transform duration-300 ease-in-out
         ${showSidebar ? 'translate-x-0' : '-translate-x-full md:translate-x-0'}
         flex flex-col
@@ -237,9 +208,7 @@ function App() {
               </div>
               <div>
                 <h3 className="font-medium">Media Player</h3>
-                <p className="text-xs text-gray-400">
-                  {isAuthenticated ? '已登录' : '访客模式'}
-                </p>
+                <p className="text-xs text-gray-400">{isAuthenticated ? '已登录' : '访客模式'}</p>
               </div>
             </div>
             <div className="flex items-center gap-2">
@@ -251,50 +220,25 @@ function App() {
 
         {/* Tabs */}
         <div className="flex border-b border-gray-800">
-          <button
-            onClick={() => setActiveTab('playlist')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'playlist'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            播放列表
-          </button>
-          <button
-            onClick={() => setActiveTab('favorites')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'favorites'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            收藏
-          </button>
-          <button
-            onClick={() => setActiveTab('history')}
-            className={`flex-1 py-3 text-sm font-medium transition-colors ${
-              activeTab === 'history'
-                ? 'text-primary border-b-2 border-primary'
-                : 'text-gray-400 hover:text-white'
-            }`}
-          >
-            历史
-          </button>
+          {(['playlist', 'favorites', 'history'] as const).map(tab => (
+            <button
+              key={tab}
+              onClick={() => setActiveTab(tab)}
+              className={`flex-1 py-3 text-sm font-medium transition-colors ${
+                activeTab === tab ? 'text-primary border-b-2 border-primary' : 'text-gray-400 hover:text-white'
+              }`}
+            >
+              {tab === 'playlist' ? '播放列表' : tab === 'favorites' ? '收藏' : '历史'}
+            </button>
+          ))}
         </div>
 
-        {/* Content */}
-        <div className="flex-1 overflow-auto p-4">
-          {renderSidebarContent()}
-        </div>
+        <div className="flex-1 overflow-auto p-4">{renderSidebarContent()}</div>
       </aside>
 
-      {/* Sidebar Overlay for Mobile */}
+      {/* Sidebar Overlay */}
       {showSidebar && (
-        <div
-          className="md:hidden fixed inset-0 bg-black/50 z-30"
-          onClick={() => setShowSidebar(false)}
-        />
+        <div className="md:hidden fixed inset-0 bg-black/50 z-30" onClick={() => setShowSidebar(false)} />
       )}
 
       {/* Main Content */}
@@ -305,7 +249,6 @@ function App() {
             <div className="flex-1">
               <SearchBar onSearch={handleSearch} />
             </div>
-            {/* 自定义 URL 按钮 */}
             <button
               onClick={() => setShowUrlInput(!showUrlInput)}
               className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
@@ -318,7 +261,6 @@ function App() {
             </button>
           </div>
           
-          {/* URL 输入框 */}
           {showUrlInput && (
             <div className="mt-3 flex gap-2">
               <input
@@ -329,22 +271,19 @@ function App() {
                 className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
                 onKeyDown={(e) => e.key === 'Enter' && handleCustomUrlPlay()}
               />
-              <button
-                onClick={handleCustomUrlPlay}
-                className="px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg font-medium"
-              >
+              <button onClick={handleCustomUrlPlay} className="px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg font-medium">
                 播放
               </button>
             </div>
           )}
         </div>
 
-        {/* Player Section */}
+        {/* Player */}
         <div className="px-6 pb-4">
           <Player media={currentMedia} />
         </div>
 
-        {/* Search Results - 响应式布局 */}
+        {/* Search Results */}
         {searchResults.length > 0 && (
           <div className="flex-1 overflow-auto px-6 pb-24">
             <h3 className="text-lg font-bold mb-4">搜索结果</h3>
@@ -354,11 +293,9 @@ function App() {
           </div>
         )}
 
-        {/* Mini Player */}
         <MiniPlayer />
       </main>
 
-      {/* Auth Modal */}
       <AuthModal
         isOpen={showAuthModal}
         onClose={() => setShowAuthModal(false)}
