@@ -65,36 +65,44 @@ function App() {
   }, [])
 
   const handleSearch = async (query: string) => {
-    // TODO: Implement actual search API call
-    console.log('Searching for:', query)
-    // Mock results for now
-    const mockResults: MediaItem[] = [
-      {
-        id: '1',
-        url: 'https://www.w3schools.com/html/mov_bbb.mp4',
-        title: `示例视频 - ${query}`,
-        thumbnail: 'https://via.placeholder.com/320x180',
-        duration: 10,
-        source: 'other'
-      },
-      {
-        id: '2',
-        url: 'https://www.w3schools.com/html/movie.mp4',
-        title: `另一个视频 - ${query}`,
-        thumbnail: 'https://via.placeholder.com/320x180',
-        duration: 15,
-        source: 'youtube'
-      },
-      {
-        id: '3',
-        url: 'https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3',
-        title: `示例音乐 - ${query}`,
-        thumbnail: 'https://via.placeholder.com/320x180',
-        duration: 180,
-        source: 'netease'
-      }
-    ]
-    setSearchResults(mockResults)
+    if (!query.trim()) {
+      setSearchResults([])
+      return
+    }
+    
+    try {
+      // 调用后端搜索 API
+      const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&source=all&max_results=10`)
+      const data = await response.json()
+      
+      // 转换搜索结果格式
+      const results: MediaItem[] = (data.results || []).map((item: any, index: number) => ({
+        id: item.id || `${item.source}-${index}`,
+        url: item.url,
+        title: item.title,
+        thumbnail: item.thumbnail,
+        duration: typeof item.duration === 'string' ? parseDuration(item.duration) : item.duration,
+        source: item.source || 'other'
+      }))
+      
+      setSearchResults(results)
+    } catch (error) {
+      console.error('Search failed:', error)
+      // 显示错误提示
+      setSearchResults([])
+    }
+  }
+  
+  // 解析时长字符串 (如 "3:45" -> 225 秒)
+  const parseDuration = (duration: string): number => {
+    if (!duration) return 0
+    const parts = duration.split(':').map(Number)
+    if (parts.length === 2) {
+      return parts[0] * 60 + parts[1]
+    } else if (parts.length === 3) {
+      return parts[0] * 3600 + parts[1] * 60 + parts[2]
+    }
+    return parseInt(duration) || 0
   }
 
   const handlePlay = (item: MediaItem) => {
