@@ -106,44 +106,48 @@ function App() {
   }
 
   const handlePlay = async (item: MediaItem) => {
-    // 记录到历史
-    try {
-      await fetch('/api/history', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          media_url: item.url,
-          title: item.title,
-          thumbnail: item.thumbnail,
-          position: 0,
-          duration: item.duration
-        })
-      })
-    } catch (e) {
-      console.error('Failed to record history:', e)
-    }
-    
     // YouTube/B站视频需要先提取流 URL
     if (item.source === 'youtube' || item.source === 'bilibili') {
       try {
         const response = await fetch(`/api/extract?url=${encodeURIComponent(item.url)}&format=best`)
         const data = await response.json()
         
-        if (data.direct_url || data.audio_url) {
-          // 使用提取到的流 URL
-          setCurrentMedia({
+        if (data.direct_url) {
+          // 使用提取到的流 URL 创建新的 media 对象
+          const playItem = {
             ...item,
-            url: data.direct_url || data.audio_url
-          })
+            url: data.direct_url,
+            title: data.title || item.title,
+            thumbnail: data.thumbnail || item.thumbnail,
+            duration: data.duration || item.duration
+          }
+          setCurrentMedia(playItem)
+          
+          // 记录到历史
+          fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              media_url: item.url,
+              title: playItem.title,
+              thumbnail: playItem.thumbnail,
+              position: 0,
+              duration: playItem.duration
+            })
+          }).catch(e => console.error('History error:', e))
         } else {
-          // 无法提取，直接使用原 URL（可能无法播放）
-          setCurrentMedia(item)
+          // 无法提取，使用代理播放
+          const proxyUrl = `/api/proxy?url=${encodeURIComponent(item.url)}`
+          setCurrentMedia({ ...item, url: proxyUrl })
         }
       } catch (e) {
         console.error('Failed to extract media:', e)
-        setCurrentMedia(item)
+        // 尝试代理播放
+        const proxyUrl = `/api/proxy?url=${encodeURIComponent(item.url)}`
+        setCurrentMedia({ ...item, url: proxyUrl })
       }
     } else {
+      // 其他来源直接播放
       setCurrentMedia(item)
     }
   }

@@ -10,7 +10,8 @@ export default function MiniPlayer() {
     playNext, 
     playPrevious,
     playMode,
-    setPlayMode
+    setPlayMode,
+    setCurrentMedia
   } = usePlayerStore()
   
   const [progress, setProgress] = useState(0)
@@ -240,6 +241,17 @@ export default function MiniPlayer() {
         <div className="text-xs text-gray-400 w-24 text-right">
           {formatTime(currentTime)} / {formatTime(duration || currentMedia.duration || 0)}
         </div>
+
+        {/* Close Button */}
+        <button
+          onClick={() => setCurrentMedia(null)}
+          className="p-2 hover:bg-gray-800 rounded-full transition-colors ml-2"
+          title="关闭播放器"
+        >
+          <svg className="w-5 h-5 text-gray-400 hover:text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
       </div>
     </div>
   )
