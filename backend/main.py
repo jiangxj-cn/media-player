@@ -13,11 +13,15 @@ import os
 
 from .database import engine, Base
 from .routers import search, media, auth, playlist, favorites, history, lyric, download
+from .middleware import TimingMiddleware, get_api_stats, get_health_status
 
 # 创建数据库表
 Base.metadata.create_all(bind=engine)
 
 app = FastAPI(title="Media Player API", version="2.0.0")
+
+# 添加响应时间监控中间件
+app.add_middleware(TimingMiddleware)
 
 # CORS 配置
 app.add_middleware(
@@ -66,6 +70,16 @@ async def root():
 @app.get("/api")
 async def api_info():
     return {"message": "Media Player API v2.0", "docs": "/docs"}
+
+@app.get("/api/stats")
+async def api_stats():
+    """获取 API 统计信息"""
+    return get_api_stats()
+
+@app.get("/api/health")
+async def health_check():
+    """健康检查"""
+    return get_health_status()
 
 if __name__ == "__main__":
     import uvicorn

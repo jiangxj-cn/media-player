@@ -2,6 +2,10 @@ import { StrictMode, lazy, Suspense } from 'react'
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import { ErrorBoundary } from './components/ErrorBoundary'
+import { initToast } from './components/Toast'
+
+// 初始化全局 Toast 通知
+initToast()
 
 // 懒加载 App 组件以减少初始包大小
 const App = lazy(() => import('./App'))
