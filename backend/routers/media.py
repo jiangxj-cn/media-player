@@ -1,7 +1,9 @@
 from fastapi import APIRouter
+from fastapi.responses import StreamingResponse
 from ..services.extractor import extract_media_info
 from ..schemas.media import MediaInfo
 import asyncio
+import aiohttp
 
 router = APIRouter(prefix="/api", tags=["media"])
 
@@ -35,13 +37,17 @@ async def extract_get(url: str, format: str = "best"):
 
 @router.get("/proxy")
 async def proxy(url: str):
-    """代理播放（绕过 CORS）"""
-    from fastapi.responses import StreamingResponse
-    import aiohttp
+    """代理播放（绕过 CORS 和 403）"""
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+        'Accept-Language': 'en-US,en;q=0.9',
+        'Referer': 'https://www.youtube.com/',
+    }
     
     async def stream():
         async with aiohttp.ClientSession() as session:
-            async with session.get(url) as resp:
+            async with session.get(url, headers=headers) as resp:
                 async for chunk in resp.content.iter_chunked(8192):
                     yield chunk
     

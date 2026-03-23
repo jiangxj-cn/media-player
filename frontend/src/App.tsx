@@ -113,10 +113,11 @@ function App() {
         const data = await response.json()
         
         if (data.direct_url) {
-          // 使用提取到的流 URL 创建新的 media 对象
+          // 使用后端代理播放（避免 403）
+          const proxyUrl = `/api/proxy?url=${encodeURIComponent(data.direct_url)}`
           const playItem = {
             ...item,
-            url: data.direct_url,
+            url: proxyUrl,
             title: data.title || item.title,
             thumbnail: data.thumbnail || item.thumbnail,
             duration: data.duration || item.duration
@@ -136,15 +137,10 @@ function App() {
             })
           }).catch(e => console.error('History error:', e))
         } else {
-          // 无法提取，使用代理播放
-          const proxyUrl = `/api/proxy?url=${encodeURIComponent(item.url)}`
-          setCurrentMedia({ ...item, url: proxyUrl })
+          console.error('No direct URL found')
         }
       } catch (e) {
         console.error('Failed to extract media:', e)
-        // 尝试代理播放
-        const proxyUrl = `/api/proxy?url=${encodeURIComponent(item.url)}`
-        setCurrentMedia({ ...item, url: proxyUrl })
       }
     } else {
       // 其他来源直接播放
