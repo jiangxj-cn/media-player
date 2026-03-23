@@ -105,8 +105,47 @@ function App() {
     return parseInt(duration) || 0
   }
 
-  const handlePlay = (item: MediaItem) => {
-    setCurrentMedia(item)
+  const handlePlay = async (item: MediaItem) => {
+    // 记录到历史
+    try {
+      await fetch('/api/history', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          media_url: item.url,
+          title: item.title,
+          thumbnail: item.thumbnail,
+          position: 0,
+          duration: item.duration
+        })
+      })
+    } catch (e) {
+      console.error('Failed to record history:', e)
+    }
+    
+    // YouTube/B站视频需要先提取流 URL
+    if (item.source === 'youtube' || item.source === 'bilibili') {
+      try {
+        const response = await fetch(`/api/extract?url=${encodeURIComponent(item.url)}&format=best`)
+        const data = await response.json()
+        
+        if (data.direct_url || data.audio_url) {
+          // 使用提取到的流 URL
+          setCurrentMedia({
+            ...item,
+            url: data.direct_url || data.audio_url
+          })
+        } else {
+          // 无法提取，直接使用原 URL（可能无法播放）
+          setCurrentMedia(item)
+        }
+      } catch (e) {
+        console.error('Failed to extract media:', e)
+        setCurrentMedia(item)
+      }
+    } else {
+      setCurrentMedia(item)
+    }
   }
 
   const handleLoginClick = () => {
