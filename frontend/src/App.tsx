@@ -133,9 +133,15 @@ function App() {
   const handleCustomUrlPlay = () => {
     if (!customUrl.trim()) return
     
+    // 判断是否是 m3u8 流媒体
+    const isHls = customUrl.includes('.m3u8') || customUrl.includes('m3u8')
+    
+    // m3u8 直接播放，不走代理
+    const playUrl = isHls ? customUrl.trim() : customUrl.trim()
+    
     const customMedia: MediaItem = {
       id: `custom-${Date.now()}`,
-      url: customUrl.trim(),
+      url: playUrl,
       title: '自定义视频',
       thumbnail: '',
       duration: 0,
