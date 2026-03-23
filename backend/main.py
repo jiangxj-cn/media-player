@@ -32,19 +32,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# 挂载静态文件（生产环境）
-# 优先使用构建后的 static 目录（Docker 部署），否则使用 frontend 目录（开发环境）
-STATIC_DIR = Path(__file__).parent.parent / "static"
-if STATIC_DIR.exists():
-    # 生产环境：服务构建后的前端文件
-    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
-else:
-    # 开发环境：服务前端源码
-    FRONTEND_DIR = Path(__file__).parent.parent / "frontend"
-    if FRONTEND_DIR.exists():
-        app.mount("/static", StaticFiles(directory=str(FRONTEND_DIR)), name="static")
-
-# 注册路由
+# 注册 API 路由（必须在静态文件挂载之前）
 app.include_router(search.router)
 app.include_router(media.router)
 app.include_router(auth.router)
@@ -53,19 +41,6 @@ app.include_router(favorites.router)
 app.include_router(history.router)
 app.include_router(lyric.router)
 app.include_router(download.router)
-
-@app.get("/")
-async def root():
-    """返回前端页面"""
-    # 生产环境：从 static 目录服务
-    static_index = Path(__file__).parent.parent / "static" / "index.html"
-    if static_index.exists():
-        return FileResponse(static_index)
-    # 开发环境：从 frontend 目录服务
-    frontend_index = Path(__file__).parent.parent / "frontend" / "index.html"
-    if frontend_index.exists():
-        return FileResponse(frontend_index)
-    return {"message": "Media Player API v2.0", "docs": "/docs"}
 
 @app.get("/api")
 async def api_info():
@@ -80,6 +55,12 @@ async def api_stats():
 async def health_check():
     """健康检查"""
     return get_health_status()
+
+# 挂载静态文件（必须在所有 API 路由之后）
+STATIC_DIR = Path(__file__).parent.parent / "static"
+if STATIC_DIR.exists():
+    # 生产环境：服务构建后的前端文件
+    app.mount("/", StaticFiles(directory=str(STATIC_DIR), html=True), name="static")
 
 if __name__ == "__main__":
     import uvicorn
