@@ -21,6 +21,8 @@ function App() {
   const [showAuthModal, setShowAuthModal] = useState(false)
   const [authModalView, setAuthModalView] = useState<'login' | 'register'>('login')
   const [showSidebar, setShowSidebar] = useState(true)
+  const [customUrl, setCustomUrl] = useState('')
+  const [showUrlInput, setShowUrlInput] = useState(false)
   
   // Initialize auth state and load data from DB
   useEffect(() => {
@@ -299,7 +301,42 @@ function App() {
       <main className="flex-1 flex flex-col overflow-hidden">
         {/* Top Bar */}
         <div className="p-6 pb-4 pt-16 md:pt-6">
-          <SearchBar onSearch={handleSearch} />
+          <div className="flex gap-2">
+            <div className="flex-1">
+              <SearchBar onSearch={handleSearch} />
+            </div>
+            {/* 自定义 URL 按钮 */}
+            <button
+              onClick={() => setShowUrlInput(!showUrlInput)}
+              className="px-4 py-2 bg-gray-800 hover:bg-gray-700 rounded-lg text-sm flex items-center gap-2"
+              title="直接播放视频链接"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.828 10.172a4 4 0 00-5.656 0l-4 4a4 4 0 105.656 5.656l1.102-1.101m-.758-4.899a4 4 0 005.656 0l4-4a4 4 0 00-5.656-5.656l-1.1 1.1" />
+              </svg>
+              链接
+            </button>
+          </div>
+          
+          {/* URL 输入框 */}
+          {showUrlInput && (
+            <div className="mt-3 flex gap-2">
+              <input
+                type="text"
+                value={customUrl}
+                onChange={(e) => setCustomUrl(e.target.value)}
+                placeholder="输入视频链接 (支持 m3u8/mp4)"
+                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg focus:outline-none focus:border-primary"
+                onKeyDown={(e) => e.key === 'Enter' && handleCustomUrlPlay()}
+              />
+              <button
+                onClick={handleCustomUrlPlay}
+                className="px-6 py-2 bg-primary hover:bg-primary/90 rounded-lg font-medium"
+              >
+                播放
+              </button>
+            </div>
+          )}
         </div>
 
         {/* Player Section */}
