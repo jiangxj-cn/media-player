@@ -148,7 +148,40 @@ function App() {
     }
   }
 
-  const handleLoginClick = () => {
+  const [customUrl, setCustomUrl] = useState('')
+  const [showUrlInput, setShowUrlInput] = useState(false)
+
+  const handleCustomUrlPlay = () => {
+    if (!customUrl.trim()) return
+    
+    // 创建自定义媒体项
+    const customMedia: MediaItem = {
+      id: `custom-${Date.now()}`,
+      url: customUrl.trim(),
+      title: '自定义视频',
+      thumbnail: '',
+      duration: 0,
+      source: 'custom'
+    }
+    
+    // 直接播放（m3u8 或 mp4）
+    setCurrentMedia(customMedia)
+    setCustomUrl('')
+    setShowUrlInput(false)
+    
+    // 记录历史
+    fetch('/api/history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        media_url: customUrl.trim(),
+        title: '自定义视频',
+        thumbnail: '',
+        position: 0,
+        duration: 0
+      })
+    }).catch(e => console.error('History error:', e))
+  }
     setAuthModalView('login')
     setShowAuthModal(true)
   }
