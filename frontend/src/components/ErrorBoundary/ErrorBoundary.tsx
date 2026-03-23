@@ -1,4 +1,4 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import { Component, type ErrorInfo, type ReactNode } from 'react'
 
 interface Props {
   children: ReactNode
@@ -28,9 +28,6 @@ class ErrorBoundary extends Component<Props, State> {
   componentDidCatch(error: Error, errorInfo: ErrorInfo): void {
     console.error('ErrorBoundary caught an error:', error, errorInfo)
     this.setState({ errorInfo })
-    
-    // 可以在这里上报错误到监控服务
-    // reportError(error, errorInfo)
   }
 
   handleReset = (): void => {
@@ -58,7 +55,7 @@ class ErrorBoundary extends Component<Props, State> {
               应用遇到了一个问题。请尝试刷新页面。
             </p>
             
-            {process.env.NODE_ENV === 'development' && this.state.error && (
+            {import.meta.env.DEV && this.state.error && (
               <details className="text-left mb-4 p-3 bg-gray-900 rounded text-xs overflow-auto max-h-40">
                 <summary className="text-red-400 cursor-pointer mb-2">
                   错误详情

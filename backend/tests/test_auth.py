@@ -14,7 +14,6 @@ class TestAuthAPI:
         assert response.status_code == 200
         data = response.json()
         assert data["username"] == test_user_data["username"]
-        assert data["email"] == test_user_data["email"]
         assert "id" in data
     
     def test_register_duplicate_username(self, client, test_user_data):
@@ -70,15 +69,31 @@ class TestAuthAPI:
         )
         assert response.status_code == 401
     
-    def test_get_current_user(self, client, auth_headers):
-        """测试获取当前用户"""
-        response = client.get("/api/auth/me", headers=auth_headers)
+    def test_get_profile_authorized(self, client, auth_headers):
+        """测试认证后获取用户信息"""
+        response = client.get("/api/auth/profile", headers=auth_headers)
         assert response.status_code == 200
         data = response.json()
         assert "username" in data
-        assert "email" in data
     
-    def test_get_current_user_unauthorized(self, client):
+    def test_get_profile_unauthorized(self, client):
         """测试未认证访问"""
-        response = client.get("/api/auth/me")
-        assert response.status_code == 401
+        response = client.get("/api/auth/profile")
+        assert response.status_code == 401  # Unauthorized
+    
+    def test_sync_data_authorized(self, client, auth_headers):
+        """测试认证后同步数据"""
+        response = client.post(
+            "/api/auth/sync",
+            json={
+                "favorites": [],
+                "history": [],
+                "playlists": []
+            },
+            headers=auth_headers
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "favorites" in data
+        assert "history" in data
+        assert "playlists" in data

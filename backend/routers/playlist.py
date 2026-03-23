@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException, Header
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import List, Optional
 from ..database import get_db
 from ..models.user import User
@@ -106,7 +107,7 @@ async def update_playlist(
     if playlist.name is not None:
         db_playlist.name = playlist.name
     
-    db_playlist.updated_at = db.func.now()
+    db_playlist.updated_at = func.now()
     db.commit()
     db.refresh(db_playlist)
     

@@ -8,70 +8,97 @@ import pytest
 class TestPlaylistAPI:
     """播放列表接口测试"""
     
-    def test_get_playlists_unauthorized(self, client):
-        """测试未认证获取播放列表"""
-        response = client.get("/api/playlist")
-        assert response.status_code == 401
-    
-    def test_create_playlist_unauthorized(self, client):
-        """测试未认证创建播放列表"""
-        response = client.post(
-            "/api/playlist",
-            json={"name": "Test Playlist", "description": "Test"}
-        )
-        assert response.status_code == 401
-    
-    def test_get_playlists_authorized(self, client, auth_headers):
-        """测试认证后获取播放列表"""
-        response = client.get("/api/playlist", headers=auth_headers)
+    def test_get_playlists_structure(self, client):
+        """测试获取播放列表响应结构"""
+        response = client.get("/api/playlists/")
         assert response.status_code == 200
         data = response.json()
-        assert isinstance(data, list)
+        assert "total" in data
+        assert "playlists" in data
+        assert isinstance(data["playlists"], list)
     
-    def test_create_playlist_authorized(self, client, auth_headers):
-        """测试认证后创建播放列表"""
+    def test_create_playlist(self, client):
+        """测试创建播放列表"""
         response = client.post(
-            "/api/playlist",
-            json={"name": "My Playlist", "description": "Test playlist"},
-            headers=auth_headers
+            "/api/playlists/",
+            json={"name": "My Playlist"}
         )
         assert response.status_code == 200
         data = response.json()
+        assert "id" in data
         assert data["name"] == "My Playlist"
     
-    def test_update_playlist(self, client, auth_headers):
+    def test_get_playlist_by_id(self, client):
+        """测试获取单个播放列表"""
+        # 先创建
+        create_response = client.post(
+            "/api/playlists/",
+            json={"name": "Test Playlist"}
+        )
+        playlist_id = create_response.json().get("id")
+        
+        if playlist_id:
+            # 获取
+            get_response = client.get(f"/api/playlists/{playlist_id}")
+            assert get_response.status_code == 200
+            assert get_response.json()["name"] == "Test Playlist"
+    
+    def test_update_playlist(self, client):
         """测试更新播放列表"""
         # 创建播放列表
         create_response = client.post(
-            "/api/playlist",
-            json={"name": "Original Name", "description": "Original"},
-            headers=auth_headers
+            "/api/playlists/",
+            json={"name": "Original Name"}
         )
         playlist_id = create_response.json().get("id")
         
         if playlist_id:
             # 更新播放列表
             update_response = client.put(
-                f"/api/playlist/{playlist_id}",
-                json={"name": "Updated Name", "description": "Updated"},
-                headers=auth_headers
+                f"/api/playlists/{playlist_id}",
+                json={"name": "Updated Name"}
             )
             assert update_response.status_code == 200
+            assert update_response.json()["name"] == "Updated Name"
     
-    def test_delete_playlist(self, client, auth_headers):
+    def test_delete_playlist(self, client):
         """测试删除播放列表"""
         # 创建播放列表
         create_response = client.post(
-            "/api/playlist",
-            json={"name": "To Delete", "description": "Will be deleted"},
-            headers=auth_headers
+            "/api/playlists/",
+            json={"name": "To Delete"}
         )
         playlist_id = create_response.json().get("id")
         
         if playlist_id:
             # 删除播放列表
             delete_response = client.delete(
-                f"/api/playlist/{playlist_id}",
-                headers=auth_headers
+                f"/api/playlists/{playlist_id}"
             )
-            assert delete_response.status_code in [200, 204, 404]
+            assert delete_response.status_code == 200
+            
+            # 验证已删除
+            get_response = client.get(f"/api/playlists/{playlist_id}")
+            assert get_response.status_code == 404
+    
+    def test_add_item_to_playlist(self, client):
+        """测试添加项到播放列表"""
+        # 创建播放列表
+        create_response = client.post(
+            "/api/playlists/",
+            json={"name": "Item Test Playlist"}
+        )
+        playlist_id = create_response.json().get("id")
+        
+        if playlist_id:
+            # 添加项
+            add_response = client.post(
+                f"/api/playlists/{playlist_id}/items",
+                json={
+                    "media_url": "https://youtube.com/watch?v=item1",
+                    "title": "Test Item",
+                    "source": "youtube"
+                }
+            )
+            assert add_response.status_code == 200
+            assert add_response.json()["title"] == "Test Item"

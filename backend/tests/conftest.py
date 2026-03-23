@@ -9,19 +9,23 @@ import sys
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
+from sqlalchemy.pool import StaticPool
 
 # 添加项目根目录到 Python 路径
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from backend.database import Base, get_db
+# 导入 Base 和模型
+from backend.database import Base
 from backend.main import app
+from backend import models  # 确保模型被导入
 
 # 使用内存数据库进行测试
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 engine = create_engine(
     SQLALCHEMY_DATABASE_URL,
-    connect_args={"check_same_thread": False}
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
 )
 TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
@@ -29,18 +33,22 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 @pytest.fixture(scope="function")
 def db_session():
     """创建测试数据库会话"""
+    # 创建所有表
     Base.metadata.create_all(bind=engine)
     session = TestingSessionLocal()
     try:
         yield session
     finally:
         session.close()
+        # 清理表
         Base.metadata.drop_all(bind=engine)
 
 
 @pytest.fixture(scope="function")
 def client(db_session):
     """创建测试客户端"""
+    from backend.database import get_db
+    
     def override_get_db():
         try:
             yield db_session
@@ -80,5 +88,7 @@ def auth_headers(client, test_user_data):
         }
     )
     
-    token = response.json().get("access_token")
-    return {"Authorization": f"Bearer {token}"}
+    if response.status_code == 200:
+        token = response.json().get("access_token")
+        return {"Authorization": f"Bearer {token}"}
+    return {}

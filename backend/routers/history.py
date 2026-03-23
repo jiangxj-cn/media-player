@@ -3,6 +3,7 @@
 """
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
+from sqlalchemy import func
 from typing import Optional
 
 from ..database import get_db
@@ -53,7 +54,7 @@ async def record_history(
         existing.position = history.position
         if history.duration is not None:
             existing.duration = history.duration
-        existing.last_played_at = db.func.now()
+        existing.last_played_at = func.now()
         db.commit()
         db.refresh(existing)
         return existing
