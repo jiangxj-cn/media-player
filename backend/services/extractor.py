@@ -1,56 +1,69 @@
 from fastapi import HTTPException
-import subprocess
-import json
+import requests
+import re
+from urllib.parse import quote
 
 def extract_media_info(url: str, format_type: str = "best"):
-    """提取媒体信息 - 使用 yt-dlp 命令行工具"""
+    """提取媒体信息 - 使用第三方解析服务"""
     
-    # 使用命令行方式，更稳定
-    cmd = [
-        'yt-dlp',
-        '--no-warnings',
-        '--quiet',
-        '--dump-json',
-        '--no-playlist',
-        '-f', 'best[ext=mp4]/best',
-        url
-    ]
+    if 'bilibili.com' in url or 'b23.tv' in url:
+        return extract_bilibili(url)
+    elif 'youtube.com' in url or 'youtu.be' in url:
+        return extract_youtube(url)
+    else:
+        raise HTTPException(status_code=400, detail="不支持的视频源")
+
+def extract_bilibili(url: str):
+    """B站视频解析 - 使用第三方 API"""
+    
+    # 米人API - 免费，稳定
+    api_url = f"https://api.mir6.com/api/bzjiexi?url={quote(url)}&type=json"
     
     try:
-        result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
+        response = requests.get(api_url, timeout=30)
+        data = response.json()
         
-        if result.returncode != 0:
-            # 如果失败，尝试不指定格式
-            cmd = ['yt-dlp', '--no-warnings', '--quiet', '--dump-json', '--no-playlist', url]
-            result = subprocess.run(cmd, capture_output=True, text=True, timeout=60)
-            
-            if result.returncode != 0:
-                raise Exception(f"yt-dlp failed: {result.stderr}")
+        if data.get('code') != 200:
+            raise Exception(data.get('msg', '解析失败'))
         
-        info = json.loads(result.stdout)
-        
-        # 获取直接播放 URL
-        direct_url = info.get('url')
-        
-        # 如果没有 url，尝试从 formats 中获取
-        if not direct_url:
-            for f in info.get('formats', []):
-                if f.get('url') and f.get('vcodec') != 'none':
-                    direct_url = f['url']
-                    break
+        video_data = data.get('data', [{}])[0]
         
         return {
-            'title': info.get('title', 'Unknown'),
-            'thumbnail': info.get('thumbnail'),
-            'duration': info.get('duration'),
-            'uploader': info.get('uploader'),
-            'direct_url': direct_url,
+            'title': data.get('title', 'Unknown'),
+            'thumbnail': data.get('imgurl', ''),
+            'duration': video_data.get('duration', 0),
+            'uploader': data.get('user', {}).get('name', ''),
+            'direct_url': video_data.get('video_url', ''),
+            'source': 'bilibili',
             'original_url': url,
         }
         
-    except subprocess.TimeoutExpired:
-        raise HTTPException(status_code=408, detail="提取超时")
-    except json.JSONDecodeError:
-        raise HTTPException(status_code=500, detail="解析失败")
+    except requests.RequestException as e:
+        raise HTTPException(status_code=503, detail=f"解析服务不可用: {str(e)}")
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+def extract_youtube(url: str):
+    """YouTube 视频解析 - 使用第三方 API"""
+    
+    # 提取视频 ID
+    video_id = None
+    patterns = [
+        r'(?:v=|youtu\.be/)([a-zA-Z0-9_-]{11})',
+        r'embed/([a-zA-Z0-9_-]{11})',
+    ]
+    for pattern in patterns:
+        match = re.search(pattern, url)
+        if match:
+            video_id = match.group(1)
+            break
+    
+    if not video_id:
+        raise HTTPException(status_code=400, detail="无法解析 YouTube URL")
+    
+    # 使用第三方 API（可以替换为其他可用的 API）
+    # 这里暂时返回一个错误，提示用户使用 B站源
+    raise HTTPException(
+        status_code=400, 
+        detail="YouTube 视频暂时无法解析，请尝试搜索 B站源"
+    )
