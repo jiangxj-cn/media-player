@@ -1,85 +1,129 @@
-// Service Worker for Media Player PWA
-const CACHE_NAME = 'media-player-v1'
+/**
+ * Service Worker for Media Player PWA
+ * 提供离线缓存和后台播放支持
+ */
 
-const urlsToCache = [
+const CACHE_NAME = 'media-player-v2';
+const STATIC_CACHE = 'static-v2';
+const DYNAMIC_CACHE = 'dynamic-v2';
+
+// 静态资源列表
+const STATIC_ASSETS = [
   '/',
   '/index.html',
-  '/manifest.json'
-]
+  '/manifest.json',
+];
 
-// Install event - cache resources
+// 安装事件 - 缓存静态资源
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then((cache) => {
-        console.log('Opened cache')
-        return cache.addAll(urlsToCache)
-      })
-      .catch((err) => {
-        console.log('Cache addAll failed:', err)
-      })
-  )
-  // Skip waiting to activate immediately
-  self.skipWaiting()
-})
+    caches.open(STATIC_CACHE).then((cache) => {
+      return cache.addAll(STATIC_ASSETS);
+    })
+  );
+  self.skipWaiting();
+});
 
-// Activate event - clean up old caches
+// 激活事件 - 清理旧缓存
 self.addEventListener('activate', (event) => {
   event.waitUntil(
-    caches.keys().then((cacheNames) => {
+    caches.keys().then((keys) => {
       return Promise.all(
-        cacheNames.map((cacheName) => {
-          if (cacheName !== CACHE_NAME) {
-            console.log('Deleting old cache:', cacheName)
-            return caches.delete(cacheName)
-          }
-        })
-      )
+        keys
+          .filter((key) => key !== STATIC_CACHE && key !== DYNAMIC_CACHE)
+          .map((key) => caches.delete(key))
+      );
     })
-  )
-  // Claim all clients immediately
-  self.clients.claim()
-})
+  );
+  self.clients.claim();
+});
 
-// Fetch event - serve from cache or network
+// 请求拦截策略
 self.addEventListener('fetch', (event) => {
-  // Skip non-GET requests
-  if (event.request.method !== 'GET') {
-    return
+  const { request } = event;
+  const url = new URL(request.url);
+
+  // API 请求 - 网络优先
+  if (url.pathname.startsWith('/api/')) {
+    event.respondWith(networkFirst(request));
+    return;
   }
 
-  event.respondWith(
-    caches.match(event.request)
-      .then((response) => {
-        // Return cached response if found
-        if (response) {
-          return response
-        }
+  // 静态资源 - 缓存优先
+  if (isStaticAsset(url.pathname)) {
+    event.respondWith(cacheFirst(request));
+    return;
+  }
 
-        // Clone the request
-        const fetchRequest = event.request.clone()
+  // 视频流 - 仅网络
+  if (isVideoRequest(url)) {
+    event.respondWith(networkOnly(request));
+    return;
+  }
 
-        return fetch(fetchRequest).then((response) => {
-          // Check for valid response
-          if (!response || response.status !== 200 || response.type !== 'basic') {
-            return response
-          }
+  // 默认 - 网络优先
+  event.respondWith(networkFirst(request));
+});
 
-          // Clone the response
-          const responseToCache = response.clone()
+// 缓存优先策略
+async function cacheFirst(request) {
+  const cached = await caches.match(request);
+  if (cached) return cached;
 
-          caches.open(CACHE_NAME)
-            .then((cache) => {
-              cache.put(event.request, responseToCache)
-            })
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(STATIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (e) {
+    return new Response('Offline', { status: 503 });
+  }
+}
 
-          return response
-        }).catch(() => {
-          // Offline - return offline page for navigation requests
-          if (event.request.mode === 'navigate') {
-            return caches.match('/index.html')
-          }
-        })
-      })
-  )
-})
+// 网络优先策略
+async function networkFirst(request) {
+  try {
+    const response = await fetch(request);
+    if (response.ok) {
+      const cache = await caches.open(DYNAMIC_CACHE);
+      cache.put(request, response.clone());
+    }
+    return response;
+  } catch (e) {
+    const cached = await caches.match(request);
+    if (cached) return cached;
+    return new Response(JSON.stringify({ error: 'Network error' }), {
+      status: 503,
+      headers: { 'Content-Type': 'application/json' }
+    });
+  }
+}
+
+// 仅网络策略
+async function networkOnly(request) {
+  return fetch(request);
+}
+
+// 判断是否为静态资源
+function isStaticAsset(pathname) {
+  return /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff2?)$/i.test(pathname) ||
+         pathname === '/' ||
+         pathname === '/index.html';
+}
+
+// 判断是否为视频请求
+function isVideoRequest(url) {
+  return url.pathname.startsWith('/api/proxy') ||
+         url.pathname.endsWith('.m3u8') ||
+         url.pathname.endsWith('.mp4') ||
+         url.pathname.endsWith('.webm');
+}
+
+// 消息处理 - 用于后台播放控制
+self.addEventListener('message', (event) => {
+  if (event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting();
+  }
+});
