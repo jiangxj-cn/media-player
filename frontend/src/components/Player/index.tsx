@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import Plyr from 'plyr'
 import 'plyr/dist/plyr.css'
 import Hls from 'hls.js'
@@ -17,9 +17,13 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
   const hlsRef = useRef<Hls | null>(null)
   const { togglePlay, isPlaying, playNext, saveProgress, getProgress } = usePlayerStore()
   const hasLoadedProgress = useRef(false)
+  const [embedError, setEmbedError] = useState(false)
+
+  // 判断是否使用 iframe 嵌入播放
+  const useEmbedPlayer = media?.useEmbed && media?.embedUrl
 
   useEffect(() => {
-    if (!videoRef.current || !media) return
+    if (!videoRef.current || !media || useEmbedPlayer) return
 
     const video = videoRef.current
 
@@ -79,12 +83,10 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
       const currentTime = player.currentTime
       const duration = player.duration
       
-      // 发送时间更新事件给 MiniPlayer
       window.dispatchEvent(new CustomEvent('player:timeupdate', {
         detail: { currentTime, duration }
       }))
       
-      // 保存播放进度（每 5 秒保存一次）
       if (currentTime > 0 && Math.floor(currentTime) % 5 === 0) {
         saveProgress(media.id, currentTime)
       }
@@ -96,7 +98,6 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
       playNext()
     })
 
-    // 恢复上次的播放位置
     if (!hasLoadedProgress.current && media.id) {
       const savedProgress = getProgress(media.id)
       if (savedProgress > 0 && savedProgress < player.duration - 5) {
@@ -106,7 +107,6 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
     }
 
     return () => {
-      // 保存最终进度
       if (media && playerRef.current) {
         saveProgress(media.id, playerRef.current.currentTime)
       }
@@ -117,20 +117,20 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
       }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [media?.url])
+  }, [media?.url, useEmbedPlayer])
 
   // Sync isPlaying state with player
   useEffect(() => {
-    if (!playerRef.current || !media) return
+    if (!playerRef.current || !media || useEmbedPlayer) return
     
     if (isPlaying && playerRef.current.paused) {
       void playerRef.current.play()
     } else if (!isPlaying && !playerRef.current.paused) {
       playerRef.current.pause()
     }
-  }, [isPlaying, media])
+  }, [isPlaying, media, useEmbedPlayer])
 
-  // 监听 seek 事件（来自歌词点击或 MiniPlayer 拖拽）
+  // 监听 seek 事件
   useEffect(() => {
     const handleSeek = (e: Event) => {
       const customEvent = e as CustomEvent<{ time: number }>
@@ -146,6 +146,7 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
   // 重置进度加载标志当媒体改变
   useEffect(() => {
     hasLoadedProgress.current = false
+    setEmbedError(false)
   }, [media?.id])
 
   if (!media) {
@@ -157,6 +158,51 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
             <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
           </svg>
           <p className="text-xl">选择一首歌曲或视频开始播放</p>
+        </div>
+      </div>
+    )
+  }
+
+  // 使用 iframe 嵌入播放（YouTube/B站）
+  if (useEmbedPlayer) {
+    const embedUrl = media.embedUrl!
+    
+    return (
+      <div className="w-full">
+        <div className="relative bg-black rounded-lg overflow-hidden" style={{ paddingBottom: '56.25%' }}>
+          <iframe
+            src={embedUrl}
+            className="absolute inset-0 w-full h-full"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+            allowFullScreen
+            onError={() => setEmbedError(true)}
+          />
+          {embedError && (
+            <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
+              <div className="text-center text-gray-400 p-4">
+                <svg className="w-16 h-16 mx-auto mb-4 opacity-50" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+                </svg>
+                <p className="text-lg mb-2">视频加载失败</p>
+                <p className="text-sm">请检查网络连接或尝试其他视频</p>
+                <a 
+                  href={media.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="inline-block mt-4 px-4 py-2 bg-primary rounded-lg text-white hover:bg-primary/90 transition-colors"
+                >
+                  在原网站观看
+                </a>
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="mt-4">
+          <h2 className="text-xl font-bold text-white">{media.title}</h2>
+          <p className="text-gray-400 text-sm mt-1">
+            来源：{media.source === 'youtube' ? 'YouTube' : media.source === 'bilibili' ? 'B站' : media.source}
+            <span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded">嵌入播放器</span>
+          </p>
         </div>
       </div>
     )

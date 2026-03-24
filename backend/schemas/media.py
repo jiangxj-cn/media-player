@@ -7,8 +7,12 @@ class MediaInfo(BaseModel):
     thumbnail: Optional[str] = None
     duration: Optional[int] = None
     uploader: Optional[str] = None
+    source: Optional[str] = None
+    original_url: Optional[str] = None
     direct_url: Optional[str] = None
     audio_url: Optional[str] = None
+    embed_url: Optional[str] = None  # iframe 嵌入地址
+    use_embed: bool = False  # 是否使用 iframe 播放
     formats: List[dict] = []
 
 class SearchResult(BaseModel):

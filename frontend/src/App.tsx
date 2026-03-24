@@ -109,9 +109,34 @@ function App() {
         const response = await fetch(`/api/extract?url=${encodeURIComponent(item.url)}&format=best`)
         const data = await response.json()
         
-        if (data.direct_url) {
+        // 检查是否使用嵌入播放器
+        if (data.use_embed && data.embed_url) {
+          const playItem: MediaItem = {
+            ...item,
+            url: data.embed_url,
+            embedUrl: data.embed_url,
+            useEmbed: true,
+            title: data.title || item.title,
+            thumbnail: data.thumbnail || item.thumbnail,
+            duration: data.duration || item.duration
+          }
+          setCurrentMedia(playItem)
+          
+          fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              media_url: item.url,
+              title: playItem.title,
+              thumbnail: playItem.thumbnail,
+              position: 0,
+              duration: playItem.duration
+            })
+          }).catch(e => console.error('History error:', e))
+        } else if (data.direct_url) {
+          // 旧的直接播放方式（作为备选）
           const proxyUrl = `/api/proxy?url=${encodeURIComponent(data.direct_url)}`
-          const playItem = {
+          const playItem: MediaItem = {
             ...item,
             url: proxyUrl,
             title: data.title || item.title,

@@ -5,6 +5,8 @@ export interface MediaItem {
   thumbnail?: string
   duration?: number
   source: 'youtube' | 'bilibili' | 'netease' | 'custom' | 'other'
+  embedUrl?: string  // iframe 嵌入地址
+  useEmbed?: boolean  // 是否使用 iframe 播放
 }
 
 export interface Playlist {
@@ -23,6 +25,8 @@ export interface HistoryItem {
   source: 'youtube' | 'bilibili' | 'netease' | 'custom' | 'other'
   position: number
   playedAt: Date
+  embedUrl?: string
+  useEmbed?: boolean
 }
 
 export type PlayMode = 'sequence' | 'random' | 'loop' | 'single-loop'
