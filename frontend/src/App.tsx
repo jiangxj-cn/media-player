@@ -109,8 +109,32 @@ function App() {
         const response = await fetch(`/api/extract?url=${encodeURIComponent(item.url)}&format=best`)
         const data = await response.json()
         
-        // 检查是否使用嵌入播放器
-        if (data.use_embed && data.embed_url) {
+        // YouTube 使用服务器代理流（国内可用）
+        if (item.source === 'youtube' && data.direct_url) {
+          const playItem: MediaItem = {
+            ...item,
+            url: data.direct_url,  // 使用代理流 URL
+            title: data.title || item.title,
+            thumbnail: data.thumbnail || item.thumbnail,
+            duration: data.duration || item.duration,
+            useEmbed: false  // 使用原生播放器
+          }
+          setCurrentMedia(playItem)
+          
+          fetch('/api/history', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              media_url: item.url,
+              title: playItem.title,
+              thumbnail: playItem.thumbnail,
+              position: 0,
+              duration: playItem.duration
+            })
+          }).catch(e => console.error('History error:', e))
+        }
+        // B站 使用嵌入播放器
+        else if (item.source === 'bilibili' && data.use_embed && data.embed_url) {
           const playItem: MediaItem = {
             ...item,
             url: data.embed_url,
@@ -133,8 +157,9 @@ function App() {
               duration: playItem.duration
             })
           }).catch(e => console.error('History error:', e))
-        } else if (data.direct_url) {
-          // 旧的直接播放方式（作为备选）
+        }
+        // 备选：直接播放
+        else if (data.direct_url) {
           const proxyUrl = `/api/proxy?url=${encodeURIComponent(data.direct_url)}`
           const playItem: MediaItem = {
             ...item,

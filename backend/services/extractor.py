@@ -50,6 +50,7 @@ class VideoInfo:
     use_embed: bool = False  # 是否使用 iframe 播放
     formats: List[VideoFormat] = None
     description: Optional[str] = None
+    piped_url: Optional[str] = None  # Piped 代理链接（用于中国大陆用户访问 YouTube）
 
 
 # 支持的平台映射
@@ -116,9 +117,23 @@ def extract_bilibili_video_id(url: str) -> Optional[Dict[str, str]]:
     return None
 
 
+# YouTube 代理实例列表（Piped/Invidious）
+# 在中国大陆可用的 YouTube 前端代理
+YOUTUBE_PROXY_INSTANCES = [
+    "piped.video",      # Piped - 主要实例
+    "piped.kavin.rocks", # Piped - 备用实例
+]
+
+
 def get_youtube_embed_url(video_id: str) -> str:
     """获取 YouTube 嵌入播放器 URL"""
     return f"https://www.youtube.com/embed/{video_id}?autoplay=1&rel=0"
+
+
+def get_piped_embed_url(video_id: str) -> str:
+    """获取 Piped 代理嵌入播放器 URL（用于中国大陆用户）"""
+    # 使用 piped.video 作为主要实例
+    return f"https://piped.video/embed/{video_id}"
 
 
 def get_bilibili_embed_url(video_info: Dict[str, str]) -> str:
@@ -167,13 +182,17 @@ def get_yt_dlp_opts(format_type: str = "best", extract_flat: bool = False) -> di
 
 
 def extract_youtube_info(url: str) -> VideoInfo:
-    """提取 YouTube 视频信息 - 使用 iframe 嵌入"""
+    """提取 YouTube 视频信息 - 使用 Piped 代理嵌入"""
     video_id = extract_youtube_video_id(url)
     if not video_id:
         raise HTTPException(status_code=400, detail="无法解析 YouTube 链接")
     
-    embed_url = get_youtube_embed_url(video_id)
+    # 使用 Piped 代理嵌入播放器（中国大陆可访问）
+    piped_url = get_piped_embed_url(video_id)
     thumbnail = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+    
+    # 备用：YouTube 官方嵌入 URL（需要 VPN）
+    embed_url = get_youtube_embed_url(video_id)
     
     return VideoInfo(
         title=f"YouTube 视频 ({video_id})",
@@ -183,9 +202,10 @@ def extract_youtube_info(url: str) -> VideoInfo:
         source="youtube",
         original_url=url,
         direct_url=None,
-        embed_url=embed_url,
-        use_embed=True,
-        description=None
+        embed_url=embed_url,  # 官方嵌入 URL（备用）
+        use_embed=True,  # 使用 iframe 嵌入播放
+        description=None,
+        piped_url=piped_url  # Piped 代理链接（主要使用）
     )
 
 
@@ -330,6 +350,10 @@ def extract_media_info(url: str, format_type: str = "best") -> dict:
         'embed_url': info.embed_url,
         'use_embed': info.use_embed,
     }
+    
+    # 添加 Piped 代理链接（仅 YouTube）
+    if info.piped_url:
+        result['piped_url'] = info.piped_url
     
     # 添加格式列表（如果有）
     if info.formats:

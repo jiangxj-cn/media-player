@@ -20,7 +20,18 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
   const [embedError, setEmbedError] = useState(false)
 
   // 判断是否使用 iframe 嵌入播放
-  const useEmbedPlayer = media?.useEmbed && media?.embedUrl
+  // YouTube 视频优先使用 Piped 代理（国内可用）
+  const useEmbedPlayer = media?.useEmbed && (media?.pipedUrl || media?.embedUrl)
+  
+  // 获取实际使用的嵌入 URL
+  const getEmbedUrl = () => {
+    if (!media) return ''
+    // YouTube 视频优先使用 Piped 代理
+    if (media.source === 'youtube' && media.pipedUrl) {
+      return media.pipedUrl
+    }
+    return media.embedUrl || ''
+  }
 
   useEffect(() => {
     if (!videoRef.current || !media || useEmbedPlayer) return
@@ -165,7 +176,9 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
 
   // 使用 iframe 嵌入播放（YouTube/B站）
   if (useEmbedPlayer) {
-    const embedUrl = media.embedUrl!
+    const embedUrl = getEmbedUrl()
+    const isYouTube = media.source === 'youtube'
+    const usePiped = isYouTube && media.pipedUrl
     
     return (
       <div className="w-full">
@@ -177,6 +190,7 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
             allowFullScreen
             onError={() => setEmbedError(true)}
           />
+          {/* 加载错误提示 */}
           {embedError && (
             <div className="absolute inset-0 flex items-center justify-center bg-gray-900">
               <div className="text-center text-gray-400 p-4">
@@ -184,15 +198,27 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
                 </svg>
                 <p className="text-lg mb-2">视频加载失败</p>
-                <p className="text-sm">请检查网络连接或尝试其他视频</p>
-                <a 
-                  href={media.url} 
-                  target="_blank" 
-                  rel="noopener noreferrer"
-                  className="inline-block mt-4 px-4 py-2 bg-primary rounded-lg text-white hover:bg-primary/90 transition-colors"
-                >
-                  在原网站观看
-                </a>
+                <p className="text-sm mb-4">
+                  {usePiped ? 'Piped 代理暂时不可用，请稍后重试' : '请检查网络连接或尝试其他视频'}
+                </p>
+                <div className="flex flex-col gap-2">
+                  <a 
+                    href={media.url} 
+                    target="_blank" 
+                    rel="noopener noreferrer"
+                    className="inline-block px-4 py-2 bg-primary rounded-lg text-white hover:bg-primary/90 transition-colors"
+                  >
+                    在原网站观看
+                  </a>
+                  {usePiped && (
+                    <button 
+                      onClick={() => setEmbedError(false)}
+                      className="text-sm text-gray-500 hover:text-gray-300 underline"
+                    >
+                      重新加载
+                    </button>
+                  )}
+                </div>
               </div>
             </div>
           )}
@@ -200,8 +226,10 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
         <div className="mt-4">
           <h2 className="text-xl font-bold text-white">{media.title}</h2>
           <p className="text-gray-400 text-sm mt-1">
-            来源：{media.source === 'youtube' ? 'YouTube' : media.source === 'bilibili' ? 'B站' : media.source}
-            <span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded">嵌入播放器</span>
+            来源：{isYouTube ? 'YouTube' : media.source === 'bilibili' ? 'B站' : media.source}
+            <span className="ml-2 text-xs bg-gray-700 px-2 py-0.5 rounded">
+              {usePiped ? 'Piped 代理' : '嵌入播放器'}
+            </span>
           </p>
         </div>
       </div>

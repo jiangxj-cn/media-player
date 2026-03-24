@@ -13,6 +13,7 @@ class MediaInfo(BaseModel):
     audio_url: Optional[str] = None
     embed_url: Optional[str] = None  # iframe 嵌入地址
     use_embed: bool = False  # 是否使用 iframe 播放
+    piped_url: Optional[str] = None  # Piped 代理链接（用于中国大陆用户访问 YouTube）
     formats: List[dict] = []
 
 class SearchResult(BaseModel):
