@@ -1,4 +1,5 @@
 from fastapi import APIRouter
+import asyncio
 from ..services.search import search_youtube, search_bilibili, search_netease_music
 from ..schemas.media import SearchResponse
 
@@ -15,20 +16,23 @@ async def search(q: str, source: str = "all", max_results: int = 10):
     """
     all_results = []
     
+    # 并行搜索多个平台
     tasks = []
     if source in ['all', 'youtube']:
-        tasks.append(('youtube', search_youtube(q, max_results)))
+        tasks.append(search_youtube(q, max_results))
     if source in ['all', 'bilibili']:
-        tasks.append(('bilibili', search_bilibili(q, max_results)))
+        tasks.append(search_bilibili(q, max_results))
     if source in ['all', 'netease']:
-        tasks.append(('netease', search_netease_music(q, max_results)))
+        tasks.append(search_netease_music(q, max_results))
     
-    for name, task in tasks:
-        try:
-            results = await task
+    # 并行执行所有搜索
+    results_list = await asyncio.gather(*tasks, return_exceptions=True)
+    
+    for results in results_list:
+        if isinstance(results, Exception):
+            print(f"Search failed: {results}")
+        elif results:
             all_results.extend(results)
-        except Exception as e:
-            print(f"{name} search failed: {e}")
     
     return {
         'query': q,
