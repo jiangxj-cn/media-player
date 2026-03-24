@@ -18,8 +18,11 @@ export default function ThemeToggle() {
     const saved = localStorage.getItem('theme')
     if (saved) {
       const dark = saved === 'dark'
-      setIsDark(dark)
-      applyTheme(dark)
+      // 使用 queueMicrotask 避免同步 setState 警告
+      queueMicrotask(() => {
+        setIsDark(dark)
+        applyTheme(dark)
+      })
     }
   }, [applyTheme])
 

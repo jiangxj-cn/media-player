@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 
@@ -14,6 +14,8 @@ class HistoryUpdate(BaseModel):
     duration: Optional[int] = None
 
 class HistoryResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     user_id: str
     media_url: str
@@ -22,9 +24,6 @@ class HistoryResponse(BaseModel):
     position: int
     duration: Optional[int] = None
     last_played_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 class HistoryListResponse(BaseModel):
     total: int

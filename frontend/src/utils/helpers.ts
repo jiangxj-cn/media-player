@@ -1,13 +1,13 @@
 /**
  * 防抖函数 - 用于搜索输入优化
  */
-export function debounce<T extends (...args: any[]) => any>(
-  fn: T,
+export function debounce<T extends unknown[], R>(
+  fn: (...args: T) => R,
   delay: number
-): (...args: Parameters<T>) => void {
+): (...args: T) => void {
   let timeoutId: ReturnType<typeof setTimeout> | null = null
   
-  return function(this: any, ...args: Parameters<T>) {
+  return function(this: unknown, ...args: T) {
     if (timeoutId) {
       clearTimeout(timeoutId)
     }
@@ -22,13 +22,13 @@ export function debounce<T extends (...args: any[]) => any>(
 /**
  * 节流函数 - 用于滚动事件优化
  */
-export function throttle<T extends (...args: any[]) => any>(
-  fn: T,
+export function throttle<T extends unknown[], R>(
+  fn: (...args: T) => R,
   delay: number
-): (...args: Parameters<T>) => void {
+): (...args: T) => void {
   let lastCall = 0
   
-  return function(this: any, ...args: Parameters<T>) {
+  return function(this: unknown, ...args: T) {
     const now = Date.now()
     
     if (now - lastCall >= delay) {

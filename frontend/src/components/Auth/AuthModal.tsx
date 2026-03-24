@@ -11,15 +11,15 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, defaultView = 'login', onAuthSuccess }: AuthModalProps) {
   const [view, setView] = useState<'login' | 'register'>(defaultView)
-  const prevIsOpen = useRef(isOpen)
+  const prevDefaultView = useRef(defaultView)
   
-  // 只在 isOpen 从 false 变为 true 时设置 view
+  // 当 defaultView 改变时更新 view（使用 queueMicrotask 避免同步 setState 警告）
   useEffect(() => {
-    if (isOpen && !prevIsOpen.current) {
-      setView(defaultView)
+    if (defaultView !== prevDefaultView.current) {
+      queueMicrotask(() => setView(defaultView))
+      prevDefaultView.current = defaultView
     }
-    prevIsOpen.current = isOpen
-  }, [isOpen, defaultView])
+  }, [defaultView])
   
   if (!isOpen) return null
   

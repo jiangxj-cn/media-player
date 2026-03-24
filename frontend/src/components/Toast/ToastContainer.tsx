@@ -1,7 +1,6 @@
 import { useEffect, useState, useCallback } from 'react'
-import { createRoot } from 'react-dom/client'
-
-export type ToastType = 'success' | 'error' | 'warning' | 'info'
+import { setAddToast } from './toast'
+import type { ToastType } from './toast'
 
 interface ToastConfig {
   message: string
@@ -13,50 +12,19 @@ interface ToastItem extends ToastConfig {
   id: number
 }
 
-let toastId = 0
-let addToast: (config: ToastConfig) => void
-
-// 全局 Toast 函数
-export const toast = {
-  success: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'success', duration })
-  },
-  error: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'error', duration })
-  },
-  warning: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'warning', duration })
-  },
-  info: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'info', duration })
-  }
-}
-
-// 初始化 Toast 容器
-let initialized = false
-export const initToast = () => {
-  if (initialized) return
-  initialized = true
-  
-  const container = document.createElement('div')
-  container.id = 'toast-container'
-  document.body.appendChild(container)
-  createRoot(container).render(<ToastContainer />)
-}
-
-function ToastContainer() {
+export default function ToastContainer() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   useEffect(() => {
-    addToast = (config: ToastConfig) => {
-      const id = ++toastId
+    setAddToast((config: ToastConfig) => {
+      const id = Date.now() + Math.random()
       setToasts(prev => [...prev, { ...config, id }])
       
       const duration = config.duration || 3000
       setTimeout(() => {
         setToasts(prev => prev.filter(t => t.id !== id))
       }, duration)
-    }
+    })
   }, [])
 
   const removeToast = useCallback((id: number) => {
@@ -75,14 +43,14 @@ function ToastContainer() {
 }
 
 function ToastMessage({ toast, onClose }: { toast: ToastItem; onClose: () => void }) {
-  const icons = {
+  const icons: Record<ToastType, string> = {
     success: '✓',
     error: '✕',
     warning: '⚠',
     info: 'ℹ'
   }
 
-  const colors = {
+  const colors: Record<ToastType, string> = {
     success: 'bg-green-600',
     error: 'bg-red-600',
     warning: 'bg-yellow-600',
@@ -108,6 +76,3 @@ function ToastMessage({ toast, onClose }: { toast: ToastItem; onClose: () => voi
     </div>
   )
 }
-
-// 默认导出用于兼容
-export default ToastContainer

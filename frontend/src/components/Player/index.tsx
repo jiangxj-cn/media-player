@@ -116,6 +116,7 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
         hlsRef.current.destroy()
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [media?.url])
 
   // Sync isPlaying state with player

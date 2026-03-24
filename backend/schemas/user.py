@@ -1,4 +1,4 @@
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, field_validator, ConfigDict
 from datetime import datetime
 from typing import List, Optional
 
@@ -30,12 +30,11 @@ class UserLogin(BaseModel):
 
 
 class UserResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     username: str
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 
 class Token(BaseModel):

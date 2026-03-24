@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 
@@ -9,6 +9,8 @@ class FavoriteCreate(BaseModel):
     source: Optional[str] = None
 
 class FavoriteResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     user_id: str
     media_url: str
@@ -16,9 +18,6 @@ class FavoriteResponse(BaseModel):
     thumbnail: Optional[str] = None
     source: Optional[str] = None
     created_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 class FavoriteListResponse(BaseModel):
     total: int

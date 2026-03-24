@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from datetime import datetime
 from typing import Optional, List
 
@@ -22,17 +22,18 @@ class PlaylistReorderRequest(BaseModel):
     new_position: int
 
 class PlaylistResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     user_id: str
     name: str
     created_at: datetime
     updated_at: datetime
     items: Optional[List["PlaylistItemResponse"]] = None
-    
-    class Config:
-        from_attributes = True
 
 class PlaylistItemResponse(BaseModel):
+    model_config = ConfigDict(from_attributes=True)
+    
     id: str
     playlist_id: str
     media_url: str
@@ -41,9 +42,6 @@ class PlaylistItemResponse(BaseModel):
     source: Optional[str] = None
     position: int
     added_at: datetime
-    
-    class Config:
-        from_attributes = True
 
 class PlaylistListResponse(BaseModel):
     total: int
