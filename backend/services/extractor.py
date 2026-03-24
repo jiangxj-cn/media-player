@@ -182,17 +182,18 @@ def get_yt_dlp_opts(format_type: str = "best", extract_flat: bool = False) -> di
 
 
 def extract_youtube_info(url: str) -> VideoInfo:
-    """提取 YouTube 视频信息 - 使用 Piped 代理嵌入"""
+    """提取 YouTube 视频信息 - 使用服务器代理流"""
     video_id = extract_youtube_video_id(url)
     if not video_id:
         raise HTTPException(status_code=400, detail="无法解析 YouTube 链接")
     
-    # 使用 Piped 代理嵌入播放器（中国大陆可访问）
-    piped_url = get_piped_embed_url(video_id)
-    thumbnail = f"https://img.youtube.com/vi/{video_id}/maxresdefault.jpg"
+    # 使用服务器代理 URL（中国大陆可访问）
+    proxy_stream_url = f"/api/youtube/{video_id}/stream"
+    thumbnail = f"/api/youtube/{video_id}/thumbnail"  # 也代理缩略图
     
     # 备用：YouTube 官方嵌入 URL（需要 VPN）
     embed_url = get_youtube_embed_url(video_id)
+    piped_url = get_piped_embed_url(video_id)
     
     return VideoInfo(
         title=f"YouTube 视频 ({video_id})",
@@ -201,11 +202,11 @@ def extract_youtube_info(url: str) -> VideoInfo:
         uploader="YouTube",
         source="youtube",
         original_url=url,
-        direct_url=None,
-        embed_url=embed_url,  # 官方嵌入 URL（备用）
-        use_embed=True,  # 使用 iframe 嵌入播放
+        direct_url=proxy_stream_url,  # 使用代理流 URL
+        embed_url=embed_url,
+        use_embed=False,  # 不再使用 iframe，改用原生播放器
         description=None,
-        piped_url=piped_url  # Piped 代理链接（主要使用）
+        piped_url=piped_url
     )
 
 

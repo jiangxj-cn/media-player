@@ -87,12 +87,19 @@ async def proxy(
     
     支持 Range 请求，用于视频拖动
     """
+    # 根据 URL 判断来源，设置不同的 Referer
+    referer = 'https://www.bilibili.com/'
+    if 'youtube' in url.lower() or 'ytimg' in url.lower():
+        referer = 'https://www.youtube.com/'
+    elif 'douyin' in url.lower():
+        referer = 'https://www.douyin.com/'
+    
     headers = {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': '*/*',
         'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
         'Accept-Encoding': 'identity',  # 禁用压缩以支持 Range
-        'Referer': 'https://www.bilibili.com/',
+        'Referer': referer,
         'Connection': 'keep-alive',
     }
     
@@ -392,3 +399,54 @@ async def youtube_thumbnail(video_id: str):
     except Exception as e:
         logger.error(f"Thumbnail proxy error: {e}")
         raise HTTPException(status_code=502, detail=f"缩略图获取失败: {str(e)[:50]}")
+
+
+@router.get("/image")
+async def proxy_image(url: str):
+    """代理图片请求（绕过防盗链）
+    
+    用于代理 B站、抖音等平台的图片，解决 403 Forbidden 问题
+    """
+    # 根据 URL 判断来源
+    referer = 'https://www.bilibili.com/'
+    if 'hdslb.com' in url or 'bilibili.com' in url:
+        referer = 'https://www.bilibili.com/'
+    elif 'youtube' in url.lower() or 'ytimg' in url.lower():
+        referer = 'https://www.youtube.com/'
+    elif 'douyin' in url.lower():
+        referer = 'https://www.douyin.com/'
+    elif 'ixigua' in url.lower():
+        referer = 'https://www.ixigua.com/'
+    
+    headers = {
+        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': 'image/avif,image/webp,image/apng,image/svg+xml,image/*,*/*;q=0.8',
+        'Accept-Language': 'zh-CN,zh;q=0.9,en;q=0.8',
+        'Referer': referer,
+    }
+    
+    timeout = httpx.Timeout(30, connect=10)
+    
+    try:
+        async with httpx.AsyncClient(timeout=timeout, follow_redirects=True) as client:
+            response = await client.get(url, headers=headers)
+            
+            if response.status_code != 200:
+                raise HTTPException(status_code=response.status_code, detail="图片获取失败")
+            
+            # 获取内容类型
+            content_type = response.headers.get('Content-Type', 'image/jpeg')
+            
+            return StreamingResponse(
+                iter([response.content]),
+                media_type=content_type,
+                headers={
+                    "Cache-Control": "public, max-age=86400",  # 缓存 1 天
+                    "Access-Control-Allow-Origin": "*"
+                }
+            )
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Image proxy error: {e}")
+        raise HTTPException(status_code=502, detail=f"图片代理失败: {str(e)[:50]}")

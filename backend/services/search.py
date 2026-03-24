@@ -126,11 +126,17 @@ async def search_bilibili(query: str, max_results: int = 10):
                     return await _search_bilibili_fallback(query, max_results)
                 
                 for item in data.get('data', {}).get('result', []):
+                    # 处理缩略图 URL，使用代理绕过防盗链
+                    pic_url = f"https:{item.get('pic', '')}" if item.get('pic', '').startswith('//') else item.get('pic')
+                    # 使用服务器代理绕过防盗链
+                    if pic_url and ('hdslb.com' in pic_url or 'bilibili.com' in pic_url):
+                        pic_url = f"/api/image?url={urllib.parse.quote(pic_url)}"
+                    
                     results.append({
                         'id': item.get('bvid'),
                         'title': item.get('title', '').replace('<em class="keyword">', '').replace('</em>', ''),
                         'url': f"https://www.bilibili.com/video/{item.get('bvid')}",
-                        'thumbnail': f"https:{item.get('pic', '')}" if item.get('pic', '').startswith('//') else item.get('pic'),
+                        'thumbnail': pic_url,
                         'duration': item.get('duration', ''),
                         'uploader': item.get('author', ''),
                         'source': 'bilibili'
