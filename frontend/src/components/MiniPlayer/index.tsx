@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, type JSX } from 'react'
+import { useState, useEffect, useRef, useCallback, type JSX } from 'react'
 import { usePlayerStore } from '../../stores/playerStore'
 import type { PlayMode } from '../../types'
 
@@ -125,25 +125,31 @@ export default function MiniPlayer() {
     handleProgressChange(e)
   }
 
-  const handleProgressMouseMove = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (!isDragging) return
-    handleProgressChange(e)
-  }
-
-  const handleProgressMouseUp = () => {
+  const handleProgressMouseUp = useCallback(() => {
     setIsDragging(false)
-  }
+  }, [])
+
+  // 使用 useCallback 包装以避免依赖问题
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    if (!isDragging || !duration || !progressBarRef.current) return
+    const rect = progressBarRef.current.getBoundingClientRect()
+    const percent = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width))
+    const newTime = percent * duration
+    setCurrentTime(newTime)
+    setProgress(percent * 100)
+    window.dispatchEvent(new CustomEvent('player:seek', { detail: { time: newTime } }))
+  }, [isDragging, duration])
 
   useEffect(() => {
     if (isDragging) {
-      window.addEventListener('mousemove', handleProgressMouseMove as any)
+      window.addEventListener('mousemove', handleMouseMove)
       window.addEventListener('mouseup', handleProgressMouseUp)
       return () => {
-        window.removeEventListener('mousemove', handleProgressMouseMove as any)
+        window.removeEventListener('mousemove', handleMouseMove)
         window.removeEventListener('mouseup', handleProgressMouseUp)
       }
     }
-  }, [isDragging])
+  }, [isDragging, handleMouseMove, handleProgressMouseUp])
 
   if (!currentMedia) {
     return null

@@ -2,8 +2,7 @@
  * 搜索栏组件 - 带防抖优化
  */
 
-import { useState, useCallback, useEffect, useRef } from 'react'
-import { debounce } from '../../utils/helpers'
+import { useState, useEffect, useRef } from 'react'
 
 interface SearchBarProps {
   onSearch: (query: string) => void
@@ -21,25 +20,31 @@ export default function SearchBar({
   const [query, setQuery] = useState('')
   const [isFocused, setIsFocused] = useState(false)
   const inputRef = useRef<HTMLInputElement>(null)
-
-  // 创建防抖搜索函数
-  const debouncedSearch = useCallback(
-    debounce((value: string) => {
-      if (value.trim()) {
-        onSearch(value.trim())
-      }
-    }, debounceMs),
-    [onSearch, debounceMs]
-  )
+  const debounceTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value
     setQuery(value)
-    debouncedSearch(value)
+    
+    // 清除之前的定时器
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
+    
+    // 设置新的防抖定时器
+    debounceTimerRef.current = setTimeout(() => {
+      if (value.trim()) {
+        onSearch(value.trim())
+      }
+    }, debounceMs)
   }
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    // 提交时立即执行搜索，清除防抖
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
     if (query.trim()) {
       onSearch(query.trim())
     }
@@ -47,6 +52,9 @@ export default function SearchBar({
 
   const handleClear = () => {
     setQuery('')
+    if (debounceTimerRef.current) {
+      clearTimeout(debounceTimerRef.current)
+    }
     inputRef.current?.focus()
   }
 

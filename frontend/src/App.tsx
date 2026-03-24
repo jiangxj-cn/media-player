@@ -69,7 +69,17 @@ function App() {
       const response = await fetch(`/api/search?q=${encodeURIComponent(query)}&source=all&max_results=10`)
       const data = await response.json()
       
-      const results: MediaItem[] = (data.results || []).map((item: any, index: number) => ({
+      // 搜索结果类型
+      interface SearchResultItem {
+        id?: string
+        url: string
+        title: string
+        thumbnail?: string
+        duration?: string | number
+        source?: string
+      }
+      
+      const results: MediaItem[] = (data.results || []).map((item: SearchResultItem, index: number) => ({
         id: item.id || `${item.source}-${index}`,
         url: item.url,
         title: item.title,

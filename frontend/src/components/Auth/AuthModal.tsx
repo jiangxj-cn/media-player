@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import LoginForm from './LoginForm'
 import RegisterForm from './RegisterForm'
 
@@ -11,11 +11,14 @@ interface AuthModalProps {
 
 export default function AuthModal({ isOpen, onClose, defaultView = 'login', onAuthSuccess }: AuthModalProps) {
   const [view, setView] = useState<'login' | 'register'>(defaultView)
+  const prevIsOpen = useRef(isOpen)
   
+  // 只在 isOpen 从 false 变为 true 时设置 view
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !prevIsOpen.current) {
       setView(defaultView)
     }
+    prevIsOpen.current = isOpen
   }, [isOpen, defaultView])
   
   if (!isOpen) return null

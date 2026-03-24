@@ -38,8 +38,8 @@ function LazyImage({
 
     // 检查是否支持 IntersectionObserver
     if (!('IntersectionObserver' in window)) {
-      // 不支持则直接加载
-      setIsInView(true)
+      // 不支持则直接加载 - 使用 RAF 避免同步 setState 警告
+      requestAnimationFrame(() => setIsInView(true))
       return
     }
 

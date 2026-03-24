@@ -16,7 +16,35 @@ interface ToastItem extends ToastConfig {
 let toastId = 0
 let addToast: (config: ToastConfig) => void
 
-const ToastContainer = () => {
+// 全局 Toast 函数
+export const toast = {
+  success: (message: string, duration?: number) => {
+    addToast?.({ message, type: 'success', duration })
+  },
+  error: (message: string, duration?: number) => {
+    addToast?.({ message, type: 'error', duration })
+  },
+  warning: (message: string, duration?: number) => {
+    addToast?.({ message, type: 'warning', duration })
+  },
+  info: (message: string, duration?: number) => {
+    addToast?.({ message, type: 'info', duration })
+  }
+}
+
+// 初始化 Toast 容器
+let initialized = false
+export const initToast = () => {
+  if (initialized) return
+  initialized = true
+  
+  const container = document.createElement('div')
+  container.id = 'toast-container'
+  document.body.appendChild(container)
+  createRoot(container).render(<ToastContainer />)
+}
+
+function ToastContainer() {
   const [toasts, setToasts] = useState<ToastItem[]>([])
 
   useEffect(() => {
@@ -46,7 +74,7 @@ const ToastContainer = () => {
   )
 }
 
-const ToastMessage = ({ toast, onClose }: { toast: ToastItem; onClose: () => void }) => {
+function ToastMessage({ toast, onClose }: { toast: ToastItem; onClose: () => void }) {
   const icons = {
     success: '✓',
     error: '✕',
@@ -81,32 +109,5 @@ const ToastMessage = ({ toast, onClose }: { toast: ToastItem; onClose: () => voi
   )
 }
 
-// 全局 Toast 函数
-export const toast = {
-  success: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'success', duration })
-  },
-  error: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'error', duration })
-  },
-  warning: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'warning', duration })
-  },
-  info: (message: string, duration?: number) => {
-    addToast?.({ message, type: 'info', duration })
-  }
-}
-
-// 初始化 Toast 容器
-let initialized = false
-export const initToast = () => {
-  if (initialized) return
-  initialized = true
-  
-  const container = document.createElement('div')
-  container.id = 'toast-container'
-  document.body.appendChild(container)
-  createRoot(container).render(<ToastContainer />)
-}
-
+// 默认导出用于兼容
 export default ToastContainer

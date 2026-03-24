@@ -23,10 +23,14 @@ app = FastAPI(title="Media Player API", version="2.0.0")
 # 添加响应时间监控中间件
 app.add_middleware(TimingMiddleware)
 
-# CORS 配置
+# CORS 配置 - 从环境变量读取允许的域名
+# 开发环境默认只允许 localhost，生产环境必须配置 CORS_ORIGINS
+_cors_origins_str = os.getenv("CORS_ORIGINS", "http://localhost:5173,http://localhost:3000")
+CORS_ORIGINS = [origin.strip() for origin in _cors_origins_str.split(",") if origin.strip()]
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

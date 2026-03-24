@@ -1,7 +1,17 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 
 export default function ThemeToggle() {
   const [isDark, setIsDark] = useState(true)
+
+  const applyTheme = useCallback((dark: boolean) => {
+    if (dark) {
+      document.documentElement.classList.remove('light')
+      document.documentElement.setAttribute('data-theme', 'dark')
+    } else {
+      document.documentElement.classList.add('light')
+      document.documentElement.setAttribute('data-theme', 'light')
+    }
+  }, [])
 
   useEffect(() => {
     // 从 localStorage 加载主题偏好
@@ -11,17 +21,7 @@ export default function ThemeToggle() {
       setIsDark(dark)
       applyTheme(dark)
     }
-  }, [])
-
-  const applyTheme = (dark: boolean) => {
-    if (dark) {
-      document.documentElement.classList.remove('light')
-      document.documentElement.setAttribute('data-theme', 'dark')
-    } else {
-      document.documentElement.classList.add('light')
-      document.documentElement.setAttribute('data-theme', 'light')
-    }
-  }
+  }, [applyTheme])
 
   const toggleTheme = () => {
     const newDark = !isDark
