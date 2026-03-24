@@ -155,23 +155,32 @@ export default function MiniPlayer() {
     return null
   }
 
+  // 检测是否为嵌入播放
+  const isEmbed = currentMedia.useEmbed
+
   return (
     <div className="fixed bottom-0 left-0 right-0 bg-gray-900/95 backdrop-blur-lg border-t border-gray-800 px-4 py-3 z-50">
-      {/* Progress Bar */}
-      <div
-        ref={progressBarRef}
-        className="absolute top-0 left-0 right-0 h-1 bg-gray-700 cursor-pointer group"
-        onMouseDown={handleProgressMouseDown}
-      >
+      {/* Progress Bar - 嵌入播放时显示为不可用状态 */}
+      {!isEmbed ? (
         <div
-          className="h-full bg-primary relative transition-all"
-          style={{ width: `${progress}%` }}
+          ref={progressBarRef}
+          className="absolute top-0 left-0 right-0 h-1 bg-gray-700 cursor-pointer group"
+          onMouseDown={handleProgressMouseDown}
         >
-          <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full transition-opacity ${
-            isDragging || 'group-hover:opacity-100 opacity-0'
-          }`} />
+          <div
+            className="h-full bg-primary relative transition-all"
+            style={{ width: `${progress}%` }}
+          >
+            <div className={`absolute right-0 top-1/2 -translate-y-1/2 w-3 h-3 bg-primary rounded-full transition-opacity ${
+              isDragging || 'group-hover:opacity-100 opacity-0'
+            }`} />
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="absolute top-0 left-0 right-0 h-1 bg-gray-700">
+          <div className="h-full bg-gray-600 w-full opacity-50" />
+        </div>
+      )}
 
       <div className="flex items-center gap-4 max-w-screen-2xl mx-auto">
         {/* Thumbnail */}
@@ -192,19 +201,28 @@ export default function MiniPlayer() {
         {/* Info */}
         <div className="flex-1 min-w-0">
           <h4 className="font-medium text-white truncate text-sm">{currentMedia.title}</h4>
-          <p className="text-xs text-gray-400">{currentMedia.source}</p>
+          <p className="text-xs text-gray-400 flex items-center gap-2">
+            {isEmbed && (
+              <span className="inline-flex items-center px-1.5 py-0.5 rounded text-xs bg-gray-700 text-gray-300">
+                嵌入播放器
+              </span>
+            )}
+            {currentMedia.source}
+          </p>
         </div>
 
         {/* Controls */}
         <div className="flex items-center gap-2">
-          {/* Play Mode Toggle */}
-          <button
-            onClick={togglePlayMode}
-            className="p-2 hover:bg-gray-800 rounded-full transition-colors"
-            title={playModeLabels[playMode]}
-          >
-            {playModeIcons[playMode]}
-          </button>
+          {/* Play Mode Toggle - 嵌入播放时隐藏 */}
+          {!isEmbed && (
+            <button
+              onClick={togglePlayMode}
+              className="p-2 hover:bg-gray-800 rounded-full transition-colors"
+              title={playModeLabels[playMode]}
+            >
+              {playModeIcons[playMode]}
+            </button>
+          )}
           
           <button
             onClick={playPrevious}
@@ -216,17 +234,23 @@ export default function MiniPlayer() {
             </svg>
           </button>
 
+          {/* Play/Pause Button - 嵌入播放时禁用 */}
           <button
-            onClick={togglePlay}
-            className="p-3 bg-primary hover:bg-primary/90 rounded-full transition-colors"
-            title={isPlaying ? '暂停' : '播放'}
+            onClick={isEmbed ? undefined : togglePlay}
+            disabled={isEmbed}
+            className={`p-3 rounded-full transition-colors ${
+              isEmbed 
+                ? 'bg-gray-700 cursor-not-allowed opacity-50' 
+                : 'bg-primary hover:bg-primary/90'
+            }`}
+            title={isEmbed ? '嵌入播放器无法控制' : (isPlaying ? '暂停' : '播放')}
           >
-            {isPlaying ? (
+            {isPlaying && !isEmbed ? (
               <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
                 <path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z" />
               </svg>
             ) : (
-              <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24">
+              <svg className={`w-5 h-5 ${isEmbed ? 'text-gray-500' : 'text-white'}`} fill="currentColor" viewBox="0 0 24 24">
                 <path d="M8 5v14l11-7z" />
               </svg>
             )}
@@ -243,9 +267,13 @@ export default function MiniPlayer() {
           </button>
         </div>
 
-        {/* Time */}
+        {/* Time - 嵌入播放时显示不可用 */}
         <div className="text-xs text-gray-400 w-24 text-right">
-          {formatTime(currentTime)} / {formatTime(duration || currentMedia.duration || 0)}
+          {isEmbed ? (
+            <span className="text-gray-500">嵌入模式</span>
+          ) : (
+            `${formatTime(currentTime)} / ${formatTime(duration || currentMedia.duration || 0)}`
+          )}
         </div>
 
         {/* Close Button */}
