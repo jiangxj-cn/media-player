@@ -6,10 +6,10 @@ interface FavoritesPanelProps {
 }
 
 export default function FavoritesPanel({ onPlay }: FavoritesPanelProps) {
-  const { favorites, removeFromFavorites, setCurrentMedia } = usePlayerStore()
+  const { favorites, removeFromFavorites } = usePlayerStore()
 
   const handlePlay = (item: MediaItem) => {
-    setCurrentMedia(item)
+    // 让父组件的 handlePlay 处理 API 调用（获取嵌入播放器等）
     onPlay?.(item)
   }
 

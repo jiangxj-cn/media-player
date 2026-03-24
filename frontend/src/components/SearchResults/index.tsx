@@ -9,12 +9,12 @@ interface SearchResultsProps {
 }
 
 export default function SearchResults({ results, onPlay }: SearchResultsProps) {
-  const { setCurrentMedia, addToPlaylist, addToFavorites, favorites, removeFromFavorites } = usePlayerStore()
+  const { addToPlaylist, addToFavorites, favorites, removeFromFavorites } = usePlayerStore()
   const [downloadingId, setDownloadingId] = useState<string | null>(null)
   const [downloadProgress, setDownloadProgress] = useState<Record<string, number>>({})
 
   const handlePlay = (item: MediaItem) => {
-    setCurrentMedia(item)
+    // 不要直接设置 currentMedia，让父组件的 handlePlay 处理 API 调用
     onPlay?.(item)
   }
 

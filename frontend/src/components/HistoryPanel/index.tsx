@@ -1,23 +1,24 @@
 import { usePlayerStore } from '../../stores/playerStore'
-import type { HistoryItem } from '../../types'
+import type { HistoryItem, MediaItem } from '../../types'
 
 interface HistoryPanelProps {
-  onPlay?: (item: HistoryItem) => void
+  onPlay?: (item: MediaItem) => void
 }
 
 export default function HistoryPanel({ onPlay }: HistoryPanelProps) {
-  const { history, setCurrentMedia, clearHistory } = usePlayerStore()
+  const { history, clearHistory } = usePlayerStore()
 
   const handlePlay = (item: HistoryItem) => {
-    setCurrentMedia({
+    // 让父组件的 handlePlay 处理 API 调用（获取嵌入播放器等）
+    const mediaItem: MediaItem = {
       id: item.id,
       url: item.url,
       title: item.title,
       thumbnail: item.thumbnail,
       duration: item.duration,
       source: item.source
-    })
-    onPlay?.(item)
+    }
+    onPlay?.(mediaItem)
   }
 
   const formatTimeAgo = (date: Date) => {
