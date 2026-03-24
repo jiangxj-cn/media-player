@@ -203,7 +203,7 @@ export default function Player({ media, onPlayStateChange, onTimeUpdate }: Playe
                 </p>
                 <div className="flex flex-col gap-2">
                   <a 
-                    href={media.url} 
+                    href={media.originalUrl || media.url} 
                     target="_blank" 
                     rel="noopener noreferrer"
                     className="inline-block px-4 py-2 bg-primary rounded-lg text-white hover:bg-primary/90 transition-colors"

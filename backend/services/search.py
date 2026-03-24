@@ -128,8 +128,8 @@ async def search_bilibili(query: str, max_results: int = 10):
                 for item in data.get('data', {}).get('result', []):
                     # 处理缩略图 URL，使用代理绕过防盗链
                     pic_url = f"https:{item.get('pic', '')}" if item.get('pic', '').startswith('//') else item.get('pic')
-                    # 使用服务器代理绕过防盗链
-                    if pic_url and ('hdslb.com' in pic_url or 'bilibili.com' in pic_url):
+                    # 使用服务器代理绕过防盗链（支持所有B站图片域名）
+                    if pic_url and ('hdslb.com' in pic_url or 'bilibili.com' in pic_url or 'biliimg.com' in pic_url):
                         pic_url = f"/api/image?url={urllib.parse.quote(pic_url)}"
                     
                     results.append({

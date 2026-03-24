@@ -12,10 +12,10 @@ from ..models.media import History
 from ..schemas.history import HistoryCreate, HistoryResponse, HistoryListResponse
 from ..utils.auth import get_current_user, require_user
 
-router = APIRouter(prefix="/api/history", tags=["history"])
+router = APIRouter(prefix="/api/history", tags=["history"], redirect_slashes=False)
 
 
-@router.get("/", response_model=HistoryListResponse)
+@router.get("", response_model=HistoryListResponse)
 async def get_history(
     limit: int = 50,
     current_user: Optional[User] = Depends(get_current_user),
@@ -34,7 +34,7 @@ async def get_history(
     }
 
 
-@router.post("/", response_model=HistoryResponse)
+@router.post("", response_model=HistoryResponse)
 async def record_history(
     history: HistoryCreate,
     current_user: Optional[User] = Depends(get_current_user),
@@ -74,7 +74,7 @@ async def record_history(
         return db_history
 
 
-@router.delete("/")
+@router.delete("")
 async def clear_history(
     current_user: Optional[User] = Depends(get_current_user),
     db: Session = Depends(get_db)

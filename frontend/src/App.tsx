@@ -114,6 +114,7 @@ function App() {
           const playItem: MediaItem = {
             ...item,
             url: data.direct_url,  // 使用代理流 URL
+            originalUrl: item.url,  // 保存原始链接
             title: data.title || item.title,
             thumbnail: data.thumbnail || item.thumbnail,
             duration: data.duration || item.duration,
@@ -140,6 +141,7 @@ function App() {
             url: data.embed_url,
             embedUrl: data.embed_url,
             useEmbed: true,
+            originalUrl: item.url,  // 保存原始链接用于"在原网站观看"
             title: data.title || item.title,
             thumbnail: data.thumbnail || item.thumbnail,
             duration: data.duration || item.duration

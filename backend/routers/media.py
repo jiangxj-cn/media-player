@@ -409,13 +409,14 @@ async def proxy_image(url: str):
     """
     # 根据 URL 判断来源
     referer = 'https://www.bilibili.com/'
-    if 'hdslb.com' in url or 'bilibili.com' in url:
+    url_lower = url.lower()
+    if 'hdslb.com' in url_lower or 'bilibili.com' in url_lower or 'biliimg.com' in url_lower:
         referer = 'https://www.bilibili.com/'
-    elif 'youtube' in url.lower() or 'ytimg' in url.lower():
+    elif 'youtube' in url_lower or 'ytimg' in url_lower:
         referer = 'https://www.youtube.com/'
-    elif 'douyin' in url.lower():
+    elif 'douyin' in url_lower:
         referer = 'https://www.douyin.com/'
-    elif 'ixigua' in url.lower():
+    elif 'ixigua' in url_lower:
         referer = 'https://www.ixigua.com/'
     
     headers = {

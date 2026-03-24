@@ -292,9 +292,15 @@ def extract_with_yt_dlp(url: str, format_type: str = "best") -> VideoInfo:
                 if not direct_url and formats:
                     direct_url = formats[0].url
             
+            # 处理缩略图 URL，使用代理绕过防盗链
+            thumbnail_url = info.get('thumbnail', info.get('thumbnails', [{}])[-1].get('url', '') if info.get('thumbnails') else '')
+            if thumbnail_url and ('hdslb.com' in thumbnail_url or 'bilibili.com' in thumbnail_url or 'biliimg.com' in thumbnail_url):
+                import urllib.parse
+                thumbnail_url = f"/api/image?url={urllib.parse.quote(thumbnail_url)}"
+            
             return VideoInfo(
                 title=info.get('title', 'Unknown'),
-                thumbnail=info.get('thumbnail', info.get('thumbnails', [{}])[-1].get('url', '') if info.get('thumbnails') else ''),
+                thumbnail=thumbnail_url,
                 duration=info.get('duration', 0),
                 uploader=info.get('uploader', info.get('channel', '')),
                 source=platform,

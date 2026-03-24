@@ -8,6 +8,7 @@ export interface MediaItem {
   embedUrl?: string  // iframe 嵌入地址
   useEmbed?: boolean  // 是否使用 iframe 播放
   pipedUrl?: string  // Piped 代理链接（用于中国大陆访问 YouTube）
+  originalUrl?: string  // 原始视频链接（用于"在原网站观看"）
 }
 
 export interface Playlist {
