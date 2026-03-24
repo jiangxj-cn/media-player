@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>影视导航 | 傲天专用</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+            color: #fff;
+            padding: 20px;
+        }
+        .container { max-width: 1200px; margin: 0 auto; }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 2em; }
+        .subtitle { text-align: center; color: #888; margin-bottom: 30px; }
+        
+        .category { margin-bottom: 30px; }
+        .category-title {
+            font-size: 1.2em;
+            color: #4fc3f7;
+            margin-bottom: 15px;
+            padding-bottom: 5px;
+            border-bottom: 2px solid #4fc3f7;
+        }
+        
+        .sites { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
+        .site {
+            background: rgba(255,255,255,0.05);
+            border-radius: 10px;
+            padding: 15px;
+            transition: all 0.3s;
+            text-decoration: none;
+            color: inherit;
+            display: block;
+        }
+        .site:hover {
+            background: rgba(255,255,255,0.1);
+            transform: translateY(-3px);
+        }
+        .site-name { font-weight: bold; font-size: 1.1em; margin-bottom: 5px; }
+        .site-desc { font-size: 0.85em; color: #aaa; }
+        .site-tag {
+            display: inline-block;
+            background: #4fc3f7;
+            color: #000;
+            font-size: 0.7em;
+            padding: 2px 6px;
+            border-radius: 3px;
+            margin-right: 5px;
+        }
+        .tag-anime { background: #f48fb1; }
+        .tag-movie { background: #81c784; }
+        .tag-netflix { background: #e57373; }
+        .tag-search { background: #ffb74d; }
+        
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            color: #666;
+            font-size: 0.8em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🎬 影视导航</h1>
+        <p class="subtitle">聚合搜索 · 无需登录 · 用户自备网络</p>
+
+        <!-- 聚合搜索 -->
+        <div class="category">
+            <h2 class="category-title">🔍 聚合搜索</h2>
+            <div class="sites">
+                <a href="https://www.ymck.pro/" target="_blank" class="site">
+                    <div class="site-name">影视仓 <span class="site-tag tag-search">聚合</span></div>
+                    <div class="site-desc">多站聚合搜索，资源丰富</div>
+                </a>
+                <a href="https://www.cupfox.app/" target="_blank" class="site">
+                    <div class="site-name">茶杯狐 <span class="site-tag tag-search">聚合</span></div>
+                    <div class="site-desc">老牌聚合搜索，口碑好</div>
+                </a>
+                <a href="https://faf-anye.com/" target="_blank" class="site">
+                    <div class="site-name">发明 TV <span class="site-tag tag-search">聚合</span></div>
+                    <div class="site-desc">多源搜索，线路多</div>
+                </a>
+                <a href="https://www.dianyinggou.com/" target="_blank" class="site">
+                    <div class="site-name">电影狗 <span class="site-tag tag-search">聚合</span></div>
+                    <div class="site-desc">电影资源聚合</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- Netflix/美剧 -->
+        <div class="category">
+            <h2 class="category-title">🎬 Netflix/美剧</h2>
+            <div class="sites">
+                <a href="https://www.nfmovies.com/" target="_blank" class="site">
+                    <div class="site-name">奈菲影视 <span class="site-tag tag-netflix">Netflix</span></div>
+                    <div class="site-desc">Netflix内容，高清无广告</div>
+                </a>
+                <a href="https://yanafei.com/" target="_blank" class="site">
+                    <div class="site-name">鸭奈飞 <span class="site-tag tag-netflix">Netflix</span></div>
+                    <div class="site-desc">Netflix剧集，更新快</div>
+                </a>
+                <a href="https://www.wanmeikk.me/" target="_blank" class="site">
+                    <div class="site-name">完美看看 <span class="site-tag tag-movie">影视</span></div>
+                    <div class="site-desc">韩剧美剧资源丰富</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 电影/剧集 -->
+        <div class="category">
+            <h2 class="category-title">🎥 电影/剧集</h2>
+            <div class="sites">
+                <a href="https://www.ddys.pro/" target="_blank" class="site">
+                    <div class="site-name">低端影视 <span class="site-tag tag-movie">影视</span></div>
+                    <div class="site-desc">简洁无广告，体验好</div>
+                </a>
+                <a href="https://www.libvio.fun/" target="_blank" class="site">
+                    <div class="site-name">LIBVIO <span class="site-tag tag-movie">影视</span></div>
+                    <div class="site-desc">多线路，资源多</div>
+                </a>
+                <a href="https://www.bttwo.com/" target="_blank" class="site">
+                    <div class="site-name">BT 之家 <span class="site-tag tag-movie">影视</span></div>
+                    <div class="site-desc">种子资源，更新快</div>
+                </a>
+                <a href="https://zhenbuka3.com/" target="_blank" class="site">
+                    <div class="site-name">真不卡 <span class="site-tag tag-movie">影视</span></div>
+                    <div class="site-desc">播放流畅，不卡顿</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 动漫 -->
+        <div class="category">
+            <h2 class="category-title">🎌 动漫</h2>
+            <div class="sites">
+                <a href="https://www.iminna.com/" target="_blank" class="site">
+                    <div class="site-name">IMINNA <span class="site-tag tag-anime">动漫</span></div>
+                    <div class="site-desc">动漫为主，更新快</div>
+                </a>
+                <a href="https://www.agemys.com/" target="_blank" class="site">
+                    <div class="site-name">AGE 动漫 <span class="site-tag tag-anime">动漫</span></div>
+                    <div class="site-desc">老牌动漫站</div>
+                </a>
+                <a href="https://www.yhdm.io/" target="_blank" class="site">
+                    <div class="site-name">樱花动漫 <span class="site-tag tag-anime">动漫</span></div>
+                    <div class="site-desc">动漫资源丰富</div>
+                </a>
+                <a href="https://www.dmdm.app/" target="_blank" class="site">
+                    <div class="site-name">大米动漫 <span class="site-tag tag-anime">动漫</span></div>
+                    <div class="site-desc">新番更新快</div>
+                </a>
+            </div>
+        </div>
+
+        <!-- 资源导航 -->
+        <div class="category">
+            <h2 class="category-title">🔗 资源导航</h2>
+            <div class="sites">
+                <a href="https://www.dytt8.net/" target="_blank" class="site">
+                    <div class="site-name">电影天堂</div>
+                    <div class="site-desc">老牌电影下载站</div>
+                </a>
+                <a href="https://www.bttwo.net/" target="_blank" class="site">
+                    <div class="site-name">BT 磁力</div>
+                    <div class="site-desc">磁力链接搜索</div>
+                </a>
+                <a href="https://xn--45q.top/" target="_blank" class="site">
+                    <div class="site-name">不死鸟</div>
+                    <div class="site-desc">资源导航站</div>
+                </a>
+            </div>
+        </div>
+
+        <div class="footer">
+            <p>💡 提示：部分网站可能需要科学上网访问</p>
+            <p>整理于 2026-03-24 | 仅供学习交流</p>
+        </div>
+    </div>
+</body>
+</html>
